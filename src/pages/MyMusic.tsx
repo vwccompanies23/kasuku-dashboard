@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
+import React, { useEffect, useState, CSSProperties } from 'react';
 
 export default function MyMusic() {
   const [releases, setReleases] = useState([]);
@@ -112,6 +113,7 @@ export default function MyMusic() {
 // =====================
 // 🎨 STYLES
 // =====================
+const styles: Record<string, CSSProperties> = {
 const styles = {
   container: {
     padding: 20,
@@ -174,7 +176,7 @@ const styles = {
   },
 
   empty: {
-    textAlign: 'center',
+    textAlign: "center" as const,
     marginTop: 60,
     color: '#888',
   },
