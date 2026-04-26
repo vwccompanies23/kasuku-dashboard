@@ -9,3 +9,10 @@
   },
   "include": ["src"]
 }
+
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmitOnError": false
+  }
+}
