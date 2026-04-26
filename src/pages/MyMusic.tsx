@@ -3,8 +3,8 @@ import { api } from '../api';
 import React, { useEffect, useState, CSSProperties } from 'react';
 
 export default function MyMusic() {
-  const [releases, setReleases] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+  const [releases, setReleases] = useState<any[]>([]);
+  const [filtered, setFiltered] = useState<[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -176,7 +176,7 @@ const styles = {
   },
 
   empty: {
-    textAlign: "center" as const,
+    textAlign: "center" as "center"
     marginTop: 60,
     color: '#888',
   },
@@ -185,7 +185,7 @@ const styles = {
 // =====================
 // 🎨 STATUS COLORS
 // =====================
-function getStatusColor(status) {
+function getStatusColor(status: string) {
   if (status === 'live') return 'green';
   if (status === 'submitted') return 'orange';
   if (status === 'approved') return '#4caf50';
