@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { api } from '../api';
 import React, { useEffect, useState, CSSProperties } from 'react';
+import { api } from '../api';
 
 export default function MyMusic() {
   const [releases, setReleases] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<[]>([]);
+  const [filtered, setFiltered] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -16,9 +15,6 @@ export default function MyMusic() {
     filterReleases();
   }, [releases, activeTab, search]);
 
-  // =====================
-  // FETCH
-  // =====================
   const fetchReleases = async () => {
     try {
       const res = await api.get('/releases/me');
@@ -28,20 +24,15 @@ export default function MyMusic() {
     }
   };
 
-  // =====================
-  // FILTER LOGIC
-  // =====================
   const filterReleases = () => {
     let data = [...releases];
 
-    // 🔍 SEARCH
     if (search) {
       data = data.filter((r) =>
         r.title.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // 🎯 TABS
     if (activeTab !== 'all') {
       data = data.filter((r) => r.status === activeTab);
     }
@@ -56,7 +47,6 @@ export default function MyMusic() {
         Track all your published and pending releases
       </p>
 
-      {/* 🔍 SEARCH */}
       <input
         style={styles.search}
         placeholder="Search releases..."
@@ -64,7 +54,6 @@ export default function MyMusic() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* 🎯 FILTER TABS */}
       <div style={styles.tabs}>
         {['all', 'live', 'approved', 'pending', 'draft'].map((tab) => (
           <button
@@ -80,7 +69,6 @@ export default function MyMusic() {
         ))}
       </div>
 
-      {/* 🎵 LIST */}
       {filtered.length === 0 ? (
         <div style={styles.empty}>
           <h2>No releases found</h2>
@@ -94,7 +82,6 @@ export default function MyMusic() {
               <p style={{ color: '#888' }}>{r.artistName}</p>
             </div>
 
-            {/* STATUS */}
             <span
               style={{
                 ...styles.status,
@@ -110,26 +97,20 @@ export default function MyMusic() {
   );
 }
 
-// =====================
-// 🎨 STYLES
-// =====================
+// ✅ FIXED styles
 const styles: Record<string, CSSProperties> = {
-const styles = {
   container: {
     padding: 20,
     color: '#fff',
   },
-
   title: {
     fontSize: 28,
     marginBottom: 5,
   },
-
   subtitle: {
     color: '#888',
     marginBottom: 20,
   },
-
   search: {
     width: '100%',
     padding: 12,
@@ -139,13 +120,11 @@ const styles = {
     color: '#fff',
     marginBottom: 20,
   },
-
   tabs: {
     display: 'flex',
     gap: 10,
     marginBottom: 20,
   },
-
   tab: {
     padding: '8px 16px',
     borderRadius: 20,
@@ -154,12 +133,10 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
   },
-
   activeTab: {
     background: '#7c3aed',
     color: '#fff',
   },
-
   card: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -167,24 +144,19 @@ const styles = {
     padding: 15,
     borderBottom: '1px solid #222',
   },
-
   status: {
     padding: '6px 12px',
     borderRadius: 10,
     fontSize: 12,
     color: '#fff',
   },
-
   empty: {
-    textAlign: "center" as "center"
+    textAlign: 'center',
     marginTop: 60,
     color: '#888',
   },
 };
 
-// =====================
-// 🎨 STATUS COLORS
-// =====================
 function getStatusColor(status: string) {
   if (status === 'live') return 'green';
   if (status === 'submitted') return 'orange';
