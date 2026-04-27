@@ -1,3 +1,7 @@
 {
-  "buildCommand": "vite build"
+  "buildCommand": "vite build",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/" }
+  ]
 }
