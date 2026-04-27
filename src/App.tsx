@@ -29,7 +29,7 @@ import Privacy from './pages/Privacy';
 import Landing from './pages/Landing';
 import ForgotPassword from './pages/ForgotPassword';
 import Collaborators from './pages/Collaborators';
-import Report from './pages/Report.jsx';
+import Report from './pages/Report';
 
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
@@ -131,7 +131,6 @@ function App() {
         <Route path="/withdraw" element={protect(withLayout(<Withdraw />))} />
         <Route path="/connect-stripe" element={protect(withLayout(<ConnectStripe />))} />
         <Route path="/profile" element={protect(withLayout(<Profile />))} />
-        <Route path="/settings" element={protect(withLayout(<Settings />))} />
         <Route path="/collaborators" element={protect(withLayout(<Collaborators />))} />
         <Route path="/report" element={protect(withLayout(<Report />))} />
 
