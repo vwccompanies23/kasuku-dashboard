@@ -4,17 +4,11 @@ export default function Payment() {
   const [plan, setPlan] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // =========================
-  // LOAD SELECTED PLAN
-  // =========================
   useEffect(() => {
     const savedPlan = localStorage.getItem('selectedPlan');
     if (savedPlan) setPlan(savedPlan);
   }, []);
 
-  // =========================
-  // HANDLE PAYMENT (🔥 FIXED)
-  // =========================
   const handlePayment = async () => {
     if (!plan) {
       alert('No plan selected ❌');
@@ -37,17 +31,14 @@ export default function Payment() {
 
       const data = await res.json();
 
-      // 🔥 DEBUG
       console.log('FULL RESPONSE:', data);
 
-      // 🔥 CRITICAL FIX (PREVENT /undefined)
       if (!data || !data.url) {
         alert('Payment failed: No Stripe URL ❌');
         setLoading(false);
         return;
       }
 
-      // ✅ REDIRECT TO STRIPE
       window.location.href = data.url;
 
     } catch (err) {
@@ -58,13 +49,9 @@ export default function Payment() {
     setLoading(false);
   };
 
-  // =========================
-  // UI
-  // =========================
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-
         <h1 style={styles.title}>Complete Your Subscription</h1>
 
         <p style={styles.plan}>
@@ -81,16 +68,13 @@ export default function Payment() {
         >
           {loading ? 'Processing...' : 'Pay with Card 💳'}
         </button>
-
       </div>
     </div>
   );
 }
 
-// =========================
-// STYLES (ALIEN LOOK)
-// =========================
-const styles = {
+// ✅ FIXED styles
+const styles: any = {
   container: {
     minHeight: '100vh',
     display: 'flex',

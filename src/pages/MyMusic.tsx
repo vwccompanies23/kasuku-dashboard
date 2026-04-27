@@ -151,7 +151,7 @@ const styles: Record<string, CSSProperties> = {
     color: '#fff',
   },
   empty: {
-    textAlign: 'center',
+    textAlign: 'center', // ✅ important: must be string literal
     marginTop: 60,
     color: '#888',
   },
