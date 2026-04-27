@@ -4,23 +4,15 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true
-  },
-  "include": ["src"]
-}
 
-{
-  "compilerOptions": {
-    "skipLibCheck": true,
-    "noEmitOnError": false
-  }
-}
+    "allowJs": true,
+    "checkJs": false,
 
-{
-  "compilerOptions": {
     "strict": false,
     "noImplicitAny": false,
-    "skipLibCheck": true
-  }
+
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src"]
 }
