@@ -18,11 +18,22 @@ export default function PaymentSuccess() {
       // 🔥 SAVE USER (IMPORTANT)
       localStorage.setItem('user', JSON.stringify(res.data));
 
+      // ✅ ADDED: get redirect target
+      const redirect = localStorage.getItem('redirectAfterPayment') || '/dashboard';
+
+      // ✅ ADDED: clear after use (important)
+      localStorage.removeItem('redirectAfterPayment');
+
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate(redirect); // 🔥 dynamic redirect
       }, 2000);
+
     } catch (err) {
       console.error(err);
+
+      // ✅ ADDED: fallback (if user not logged in yet)
+      navigate('/login');
+
     } finally {
       setLoading(false);
     }
