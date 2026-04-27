@@ -6,6 +6,9 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import useTranslation from '../useTranslation';
 import logo from '../assets/kasuku-logo.png';
 
+// ✅ ✅ ADDED: use Vite env instead of localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export default function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -16,7 +19,9 @@ export default function Login() {
 
   const login = async () => {
     try {
-      const res = await axios.post('http://localhost:3000/auth/login', {
+
+      // ✅ ✅ CHANGED: use API_URL instead of localhost
+      const res = await axios.post(`${API_URL}/auth/login`, {
         email,
         password,
       });
@@ -49,9 +54,13 @@ export default function Login() {
 
       localStorage.setItem('user', JSON.stringify(user));
 
-      window.location.href = '/dashboard';
+      // ❌ OLD
+      // window.location.href = '/dashboard';
 
-    } catch (err) {
+      // ✅ ✅ FIXED (SPA routing)
+      navigate('/dashboard');
+
+    } catch (err: any) {
       alert(err.response?.data?.message || 'Login failed ❌');
     }
   };
@@ -70,12 +79,10 @@ export default function Login() {
         {/* LEFT */}
         <div style={styles.left}>
 
-          {/* 🔥 LOGO */}
           <img src={logo} style={styles.logo} />
 
           <h2 style={styles.title}>Sign In to Kasuku</h2>
 
-          {/* EMAIL */}
           <input
             type="email"
             placeholder="your.email@example.com"
@@ -84,7 +91,6 @@ export default function Login() {
             style={styles.input}
           />
 
-          {/* PASSWORD */}
           <div style={styles.passwordBox}>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -102,12 +108,10 @@ export default function Login() {
             </span>
           </div>
 
-          {/* BUTTON */}
           <button onClick={login} style={styles.loginBtn}>
             Sign In
           </button>
 
-          {/* LINKS */}
           <p style={styles.text}>
             Forgot Password?
             <span style={styles.link} onClick={() => navigate('/forgot-password')}>
@@ -135,7 +139,6 @@ export default function Login() {
             Manage your music and royalties.
           </p>
 
-          {/* 🎸 BAND IMAGE */}
           <img
             src="/band.png"
             alt="music"
@@ -146,7 +149,6 @@ export default function Login() {
 
       </div>
 
-      {/* FOOTER (WORKING LINKS) */}
       <div style={styles.footer}>
         <span onClick={() => navigate('/help')} style={styles.footerLink}>Help</span>
         <span onClick={() => navigate('/privacy')} style={styles.footerLink}>Privacy</span>
