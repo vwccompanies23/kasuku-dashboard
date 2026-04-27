@@ -8,8 +8,8 @@ export default function Landing() {
   const [posts, setPosts] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 
-  const [lang, setLang] = localStorage.getItem('lang') ? useState(localStorage.getItem('lang')) : useState('en');
-  const [currency, setCurrency] = localStorage.getItem('currency') ? useState(localStorage.getItem('currency')) : useState('USD');
+  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
+  const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD');
 
   const navigate = useNavigate();
 
@@ -40,16 +40,18 @@ export default function Landing() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // ✅🔥 ADDED (THIS WAS MISSING — CAUSED CRASH)
-  const getCardStyle = (type) => {
+  // ✅ FIXED FUNCTION (WAS MISSING → CAUSED CRASH)
+  const getCardStyle = (type, featured = false) => {
     const active = selectedCard === type;
 
     return {
-      width: 300,
+      width: featured ? 320 : 300,
       padding: 25,
       borderRadius: 18,
       cursor: 'pointer',
-      transition: '0.3s',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'all 0.35s ease',
       background: active
         ? 'linear-gradient(135deg, rgba(255,0,60,0.2), rgba(124,58,237,0.2))'
         : '#0a0a0a',
@@ -57,11 +59,13 @@ export default function Landing() {
       boxShadow: active
         ? '0 0 30px rgba(255,0,60,0.6), 0 0 60px rgba(124,58,237,0.5)'
         : 'none',
-      transform: active ? 'scale(1.05)' : 'scale(1)',
+      transform: active
+        ? 'translateY(-10px) scale(1.05)'
+        : 'none',
     };
   };
 
-  // 🔥 PAYMENT FIRST FLOW (KEPT YOUR LOGIC)
+  // 🔥 PAYMENT FIRST (YOUR RULE)
   const handlePlanSelect = (planName) => {
     localStorage.setItem('selectedPlan', planName);
     localStorage.setItem('redirectAfterPayment', '/login');
@@ -78,45 +82,18 @@ export default function Landing() {
           <span style={styles.logoText}>KASUKU</span>
         </div>
 
-        <select
-          value={lang}
-          onChange={(e) => {
-            const selected = e.target.value;
-            setLang(selected);
-            localStorage.setItem('lang', selected);
-          }}
-          style={styles.select}
-        >
-          <option value="en">EN 🇺🇸</option>
-          <option value="fr">FR 🇫🇷</option>
-          <option value="ksw">Kishwahili drc</option>
-        </select>
-
         <div style={styles.navLinks}>
           <span onClick={() => scrollTo('features')} style={styles.link}>Features</span>
           <span onClick={() => scrollTo('pricing')} style={styles.link}>Pricing</span>
-
           <span onClick={() => navigate('/login')} style={styles.link}>Login</span>
-
-          <span onClick={() => navigate('/signup')} style={styles.ctaBtn}>
-            Get Started
-          </span>
-
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            style={styles.select}
-          >
-            <option value="USD">USD $</option>
-            <option value="CDF">CDF 🇨🇩</option>
-          </select>
+          <span onClick={() => navigate('/signup')} style={styles.ctaBtn}>Get Started</span>
         </div>
       </div>
 
       {/* HERO */}
       <section style={styles.hero}>
         <h1 style={styles.heroTitle}>
-          <div>Distribute Your Music</div>
+          Distribute Your Music
           <div style={styles.gradient}>Across the Universe</div>
         </h1>
 
@@ -139,30 +116,92 @@ export default function Landing() {
       <section style={styles.pricing} id="pricing">
         <div style={styles.cards}>
 
-          {/* ✅ FIXED CALL */}
+          {/* SOLO */}
           <div style={getCardStyle('solo')} onClick={() => setSelectedCard('solo')}>
+            <div style={styles.icon}>🎤</div>
             <h3>Solo Artist</h3>
-            <button onClick={() => handlePlanSelect('solo')} style={styles.cardBtn}>
+            <p style={styles.sub}>Perfect for independent artists</p>
+
+            <h2 style={styles.price}>
+              {convertPrice(1.75)} <span style={styles.month}>/month</span>
+            </h2>
+
+            <ul style={styles.list}>
+              <li>✔ 1 Artist Profile</li>
+              <li>✔ Unlimited Releases</li>
+              <li>✔ All Platforms</li>
+              <li>✔ Basic Analytics</li>
+            </ul>
+
+            <button style={styles.cardBtn} onClick={() => handlePlanSelect('solo')}>
               Get Started
             </button>
           </div>
 
-          <div style={getCardStyle('artists')} onClick={() => setSelectedCard('artists')}>
+          {/* ARTISTS */}
+          <div style={getCardStyle('artists', true)} onClick={() => setSelectedCard('artists')}>
+            <div style={styles.badge}>Most Popular</div>
+            <div style={styles.icon}>🎸</div>
+
             <h3>Artists</h3>
-            <button onClick={() => handlePlanSelect('artists')} style={styles.cardBtn}>
+            <p style={styles.sub}>For bands and duos</p>
+
+            <h2 style={styles.price}>
+              {convertPrice(2.08)} <span style={styles.month}>/month</span>
+            </h2>
+
+            <ul style={styles.list}>
+              <li>✔ 2 Artist Profiles</li>
+              <li>✔ Unlimited Releases</li>
+              <li>✔ All Platforms</li>
+              <li>✔ Advanced Analytics</li>
+              <li>✔ Priority Support</li>
+            </ul>
+
+            <button style={styles.ctaBig} onClick={() => handlePlanSelect('artists')}>
               Get Started
             </button>
           </div>
 
+          {/* PRO */}
           <div style={getCardStyle('pro')} onClick={() => setSelectedCard('pro')}>
+            <div style={styles.icon}>🏢</div>
+
             <h3>Pro</h3>
-            <button onClick={() => handlePlanSelect('pro')} style={styles.cardBtn}>
+            <p style={styles.sub}>For professionals & labels</p>
+
+            <h2 style={styles.price}>
+              {convertPrice(5.08)} <span style={styles.month}>/month</span>
+            </h2>
+
+            <ul style={styles.list}>
+              <li>✔ 5+ Artist Profiles</li>
+              <li>✔ Unlimited Releases</li>
+              <li>✔ Premium Analytics</li>
+              <li>✔ Dedicated Manager</li>
+            </ul>
+
+            <button style={styles.cardBtn} onClick={() => handlePlanSelect('pro')}>
               Get Started
             </button>
           </div>
 
         </div>
       </section>
+
+      {/* POSTS */}
+      <div style={styles.feedSection}>
+        <h2 style={styles.feedTitle}>🔥 Latest Updates</h2>
+
+        <div style={styles.feedGrid}>
+          {posts.map(p => (
+            <div key={p.id} style={styles.postCard}>
+              {p.image && <img src={p.image} style={styles.postImage} />}
+              <p>{p.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* FOOTER */}
       <div style={styles.footer}>
