@@ -8,8 +8,8 @@ export default function Landing() {
   const [posts, setPosts] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 
-  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
-  const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD');
+  const [lang, setLang] = localStorage.getItem('lang') ? useState(localStorage.getItem('lang')) : useState('en');
+  const [currency, setCurrency] = localStorage.getItem('currency') ? useState(localStorage.getItem('currency')) : useState('USD');
 
   const navigate = useNavigate();
 
@@ -40,14 +40,32 @@ export default function Landing() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // 🔥🔥 UPDATED LOGIC (PAYMENT FIRST)
+  // ✅🔥 ADDED (THIS WAS MISSING — CAUSED CRASH)
+  const getCardStyle = (type) => {
+    const active = selectedCard === type;
+
+    return {
+      width: 300,
+      padding: 25,
+      borderRadius: 18,
+      cursor: 'pointer',
+      transition: '0.3s',
+      background: active
+        ? 'linear-gradient(135deg, rgba(255,0,60,0.2), rgba(124,58,237,0.2))'
+        : '#0a0a0a',
+      border: '1px solid rgba(255,255,255,0.08)',
+      boxShadow: active
+        ? '0 0 30px rgba(255,0,60,0.6), 0 0 60px rgba(124,58,237,0.5)'
+        : 'none',
+      transform: active ? 'scale(1.05)' : 'scale(1)',
+    };
+  };
+
+  // 🔥 PAYMENT FIRST FLOW (KEPT YOUR LOGIC)
   const handlePlanSelect = (planName) => {
     localStorage.setItem('selectedPlan', planName);
-
-    // ✅ FORCE FLOW: payment → then login
     localStorage.setItem('redirectAfterPayment', '/login');
-
-    navigate('/payment'); // ALWAYS go to payment first
+    navigate('/payment');
   };
 
   return (
@@ -78,10 +96,8 @@ export default function Landing() {
           <span onClick={() => scrollTo('features')} style={styles.link}>Features</span>
           <span onClick={() => scrollTo('pricing')} style={styles.link}>Pricing</span>
 
-          {/* ✅ FIXED (NO MORE <a href>) */}
           <span onClick={() => navigate('/login')} style={styles.link}>Login</span>
 
-          {/* ✅ FIXED */}
           <span onClick={() => navigate('/signup')} style={styles.ctaBtn}>
             Get Started
           </span>
@@ -109,7 +125,6 @@ export default function Landing() {
         </p>
 
         <div style={styles.heroBtns}>
-          {/* ✅ FIXED */}
           <button onClick={() => navigate('/signup')} style={styles.primaryBtn}>
             Start Now 🚀
           </button>
@@ -124,24 +139,22 @@ export default function Landing() {
       <section style={styles.pricing} id="pricing">
         <div style={styles.cards}>
 
-          <div style={getCardStyle(selectedCard, 'solo')}
-               onClick={() => setSelectedCard('solo')}>
+          {/* ✅ FIXED CALL */}
+          <div style={getCardStyle('solo')} onClick={() => setSelectedCard('solo')}>
             <h3>Solo Artist</h3>
             <button onClick={() => handlePlanSelect('solo')} style={styles.cardBtn}>
               Get Started
             </button>
           </div>
 
-          <div style={getCardStyle(selectedCard, 'artists')}
-               onClick={() => setSelectedCard('artists')}>
+          <div style={getCardStyle('artists')} onClick={() => setSelectedCard('artists')}>
             <h3>Artists</h3>
             <button onClick={() => handlePlanSelect('artists')} style={styles.cardBtn}>
               Get Started
             </button>
           </div>
 
-          <div style={getCardStyle(selectedCard, 'pro')}
-               onClick={() => setSelectedCard('pro')}>
+          <div style={getCardStyle('pro')} onClick={() => setSelectedCard('pro')}>
             <h3>Pro</h3>
             <button onClick={() => handlePlanSelect('pro')} style={styles.cardBtn}>
               Get Started
