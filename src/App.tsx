@@ -68,6 +68,7 @@ import TaxForm from './pages/TaxForm';
 import PayoutOnboarding from './steps/PayoutOnboarding';
 import PaypalWithdraw from './pages/PaypalWithdraw';
 import AdminAlbums from './pages/admin/AdminAlbums';
+import EditRelease from './pages/EditRelease';
 
 function App() {
   const protect = (component) => {
@@ -84,6 +85,9 @@ function App() {
       <Routes>
 
         {/* PUBLIC */}
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/edit/:id" element={<EditRelease />} />
+        <Route path="/my-music" element={<MyReleases />} />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />

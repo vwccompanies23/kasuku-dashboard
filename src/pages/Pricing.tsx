@@ -3,22 +3,36 @@ import { api } from '../api';
 
 export default function Pricing() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const subscribe = async (
     plan: string,
     artistCount: number = 1,
   ) => {
     try {
+      setLoadingPlan(plan);
+
       const res = await api.post('/payments/subscribe', {
         plan,
         billing,
         artistCount,
       });
 
+      const url = res?.data?.url;
+
+      if (!url) {
+        alert('❌ Stripe URL missing');
+        return;
+      }
+
       // 🚀 redirect to Stripe
-      window.location.href = res.data.url;
-    } catch (err) {
-      alert('❌ Failed to start subscription');
+      window.location.href = url;
+
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.message || '❌ Failed to start subscription');
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -44,8 +58,11 @@ export default function Pricing() {
             {billing === 'monthly' ? '$1.75/mo' : '$20.99/yr'}
           </h1>
 
-          <button onClick={() => subscribe('solo')}>
-            Get Started
+          <button
+            onClick={() => subscribe('solo')}
+            disabled={loadingPlan === 'solo'}
+          >
+            {loadingPlan === 'solo' ? 'Loading...' : 'Get Started'}
           </button>
         </div>
 
@@ -56,8 +73,11 @@ export default function Pricing() {
             {billing === 'monthly' ? '$2.08/mo' : '$24.99/yr'}
           </h1>
 
-          <button onClick={() => subscribe('artists', 2)}>
-            Get Started
+          <button
+            onClick={() => subscribe('artists', 2)}
+            disabled={loadingPlan === 'artists'}
+          >
+            {loadingPlan === 'artists' ? 'Loading...' : 'Get Started'}
           </button>
         </div>
 
@@ -68,8 +88,11 @@ export default function Pricing() {
             {billing === 'monthly' ? '$5.08/mo' : '$60.99+/yr'}
           </h1>
 
-          <button onClick={() => subscribe('pro', 5)}>
-            Get Started
+          <button
+            onClick={() => subscribe('pro', 5)}
+            disabled={loadingPlan === 'pro'}
+          >
+            {loadingPlan === 'pro' ? 'Loading...' : 'Get Started'}
           </button>
         </div>
       </div>

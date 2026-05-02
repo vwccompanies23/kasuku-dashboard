@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { api } from '../../api';
-import { io } from 'socket.io-client';
+import { socket } from '../../utils/socket';
 
 export default function AdminApprovals() {
   const navigate = useNavigate();
@@ -22,11 +22,13 @@ export default function AdminApprovals() {
     // 🎧 preload notification sound
     audioRef.current = new Audio('/notification.mp3'); // put file in /public
 
-    const socket = io('http://localhost:3000');
-
     socket.on('new_release', () => {
-      handleNewRelease();
-    });
+  handleNewRelease();
+});
+
+return () => {
+  socket.off('new_release');
+};
 
     return () => socket.disconnect();
   }, []);

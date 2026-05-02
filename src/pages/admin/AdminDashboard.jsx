@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
-import { io } from 'socket.io-client';
+import { socket } from '../../utils/socket';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
@@ -13,24 +13,13 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadData();
-
-    fetch('http://localhost:3000/email/stats')
-      .then(res => res.json())
-      .then(data => setStats(data));
-
-    const socket = io('http://localhost:3000');
-
-    socket.on('email-stats', (data) => {
-      setStats(data);
-    });
-
-    return () => socket.disconnect();
-  }, []);
+  const BASE_URL =
+  window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://kasuku-backend.onrender.com';
 
   const sendCampaign = async () => {
-    await fetch('http://localhost:3000/email/campaign', {
+    await fetch('${BASE_URL}/email/campaign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ subject, message }),

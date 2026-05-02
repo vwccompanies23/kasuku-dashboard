@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-// ✅ ADD THIS (environment-based URL)
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'https://kasuku-backend.onrender.com';
 
-// ✅ Create API instance
 export const api = axios.create({
-  baseURL: API_URL, // 🔥 UPDATED (was localhost only)
+  baseURL: API_URL,
 });
 
 // ================================
@@ -35,12 +35,18 @@ api.interceptors.response.use(
   (error) => {
     console.error('API ERROR:', error?.response || error);
 
-    // ❌ DO NOT REMOVE TOKEN HERE
     if (error?.response?.status === 401) {
       console.warn('Unauthorized request ⚠️');
+    }
 
-      // 🔥 JUST LOG — DO NOTHING ELSE
-      // localStorage.removeItem('token'); ❌ REMOVE THIS LINE
+    // 🔥 NEW
+    if (error?.response?.status === 403) {
+      console.warn('Subscription required 🚀');
+
+      const currentPath = window.location.pathname;
+      localStorage.setItem('redirectAfterLogin', currentPath);
+
+      window.location.href = '/pricing';
     }
 
     return Promise.reject(error);

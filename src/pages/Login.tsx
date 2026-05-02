@@ -1,13 +1,10 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { api } from '../api';
 import { useNavigate } from 'react-router-dom';
 
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import useTranslation from '../useTranslation';
 import logo from '../assets/kasuku-logo.png';
-
-// ✅ ✅ ADDED: use Vite env instead of localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,54 +13,57 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading ] = useState(false);
 
-  const login = async () => {
-    try {
+ const login = async () => {
+  try {
+    console.log('🔐 Logging in...');
 
-      // ✅ ✅ CHANGED: use API_URL instead of localhost
-      const res = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
+    const res = await api.post('/auth/login', {
+      email,
+      password,
+    });
 
-      const token =
-        res.data?.access_token ||
-        res.data?.token;
+    console.log('✅ LOGIN RESPONSE:', res.data);
 
-      if (!token) {
-        alert('No token returned ❌');
-        return;
-      }
+    const token =
+      res.data?.access_token ||
+      res.data?.token;
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      localStorage.setItem('token', token);
-
-      let payload = {};
-      try {
-        payload = JSON.parse(atob(token.split('.')[1]));
-      } catch {}
-
-      const user = {
-        userId: payload.userId,
-        email: payload.email,
-        artistName: payload.artistName,
-        isAdmin: payload.isAdmin || false,
-      };
-
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // ❌ OLD
-      // window.location.href = '/dashboard';
-
-      // ✅ ✅ FIXED (SPA routing)
-      navigate('/dashboard');
-
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Login failed ❌');
+    if (!token) {
+      alert('Login failed: No token returned ❌');
+      return;
     }
-  };
+
+    // ✅ SAVE TOKEN
+    localStorage.setItem('token', token);
+
+    console.log('🔥 TOKEN SAVED');
+
+    // ✅ OPTIONAL: SAVE USER INFO
+    if (res.data?.user) {
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+    }
+
+    // ✅ REDIRECT
+    const redirect = localStorage.getItem('redirectAfterLogin');
+
+    if (redirect) {
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(redirect);
+    } else {
+      navigate('/dashboard');
+    }
+
+  } catch (err) {
+    console.error('❌ LOGIN ERROR:', err);
+
+    alert(
+      err?.response?.data?.message ||
+      'Login failed ❌'
+    );
+  }
+};
 
   return (
     <div style={styles.container}>
@@ -109,7 +109,7 @@ export default function Login() {
           </div>
 
           <button onClick={login} style={styles.loginBtn}>
-            Sign In
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
           <p style={styles.text}>

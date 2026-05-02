@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import PlatformSelector from '../components/PlatformSelector';
 import ReleasePreview from '../components/ReleasePreview';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 
 export default function CreateRelease() {
+
+  const navigate = useNavigate();
   const [type, setType] = useState('single');
   const [tracks, setTracks] = useState([{ title: '', file: null, duration: '' }]);
 
@@ -149,42 +152,56 @@ export default function CreateRelease() {
   };
 
   // =========================
-  // 🚀 PUBLISH + DISTRIBUTE
-  // =========================
-const handlePublish = async () => {
+// 🔥 NEW: DIRECT MUSIC UPLOAD
+// =========================
+const uploadToCloud = async () => {
   try {
     const formData = new FormData();
 
     formData.append('title', form.title);
-    formData.append('artistName', form.artistName);
-    formData.append('date', form.date);
-    formData.append('isrc', form.isrc);
-    formData.append('upc', form.upc);
-    formData.append('originalDate', form.originalDate);
+    formData.append('artist', form.artistName);
+    formData.append('userId', localStorage.getItem('userId') || '1');
 
     if (cover) {
       formData.append('cover', cover);
     }
 
-    tracks.forEach((t) => {
-      if (t.file) {
-        formData.append('tracks', t.file);
-        formData.append('trackTitles', t.title || 'Untitled');
-      }
-    });
+    if (tracks[0]?.file) {
+      formData.append('file', tracks[0].file);
+    }
 
-    formData.append('platforms', JSON.stringify(selectedPlatforms));
+    const res = await api.post('/upload/music', formData);
 
-    const res = await api.post('/releases/upload-full', formData);
+    console.log('✅ Cloud upload:', res.data);
 
-    localStorage.removeItem('releaseDraft');
-
-    alert('🔥 Release submitted successfully (Pending Admin Review)');
+    return res.data;
   } catch (err) {
-    console.log(err?.response?.data || err);
-    alert('❌ Upload failed');
+    console.log('❌ Cloud upload error:', err);
+    throw err;
   }
 };
+
+  // =========================
+  // 🚀 PUBLISH + DISTRIBUTE
+  // =========================
+const handlePublish = async () => {
+  try {
+    const res = await uploadToCloud();
+
+    console.log('🎵 Uploaded:', res);
+
+    // ✅ clear draft
+    localStorage.removeItem('releaseDraft');
+
+    // ✅ redirect to releases page
+    navigate('/my-music');
+
+  } catch (err) {
+    console.error('❌ Publish error:', err);
+    alert('Upload failed ❌');
+  }
+};
+
   return (
     <div style={styles.container}>
       <h1>Create New Release</h1>
