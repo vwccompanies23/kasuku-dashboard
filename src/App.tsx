@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
+// ALL YOUR IMPORTS (UNCHANGED)
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Success from './pages/Success';
@@ -22,10 +24,9 @@ import PublicRelease from './pages/PublicRelease';
 import SmartLink from './pages/SmartLink';
 import Payment from './pages/Payment';
 
-import Settings from './pages/Settings';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
-
+import Settings from './pages/Settings';
 import Landing from './pages/Landing';
 import ForgotPassword from './pages/ForgotPassword';
 import Collaborators from './pages/Collaborators';
@@ -35,10 +36,10 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 
 import Help from './pages/Help';
-
 import Pricing from './pages/Pricing';
+import About from './pages/About';
 
-// ✅ ADMIN
+// ADMIN (UNCHANGED)
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
@@ -56,90 +57,199 @@ import AdminWithdraw from './pages/admin/AdminWithdraw.jsx';
 import AdminPayoutHistory from './pages/admin/AdminPayoutHistory';
 import AdminFinanceDashboard from './pages/admin/AdminFinanceDashboard';
 import AdminTax from './pages/admin/AdminTax';
+import AdminAlbums from './pages/admin/AdminAlbums';
 
-// ✅ SETTINGS
+// SETTINGS
 import Subscription from './settings/Subscription';
 import SettingsLayout from './settings/SettingsLayout';
 import Contact from './settings/Contact';
 import Card from './settings/Card';
+import Contract from './settings/Contract';
+import ManageMusic from './pages/ManageMusic';
+import DeleteAccount from './pages/DeleteAccount';
 
-// ✅ TAX + ONBOARDING
+// OTHER
 import TaxForm from './pages/TaxForm';
 import PayoutOnboarding from './steps/PayoutOnboarding';
 import PaypalWithdraw from './pages/PaypalWithdraw';
-import AdminAlbums from './pages/admin/AdminAlbums';
 import EditRelease from './pages/EditRelease';
+import Verify from './pages/Verify';
+import CardForm from './settings/CardForm';
 
 function App() {
-  const protect = (component) => {
+
+  // ✅ FIX: initialize correctly (prevents refresh logout)
+  const [isAuth, setIsAuth] = useState(() => {
     const token = localStorage.getItem('token');
-    return token ? component : <Navigate to="/login" replace />;
+    return !!(token && token !== 'undefined' && token !== 'null');
+  });
+
+  // ✅ FIX: proper auth sync
+  useEffect(() => {
+    const syncAuth = () => {
+      const token = localStorage.getItem('token');
+
+      if (token && token !== 'undefined' && token !== 'null') {
+        setIsAuth(true);
+      } else {
+        setIsAuth(false);
+      }
+    };
+
+    syncAuth();
+
+    window.addEventListener('storage', syncAuth);
+
+    return () => {
+      window.removeEventListener('storage', syncAuth);
+    };
+  }, []);
+
+  // ✅ activity tracking
+  useEffect(() => {
+    const updateActivity = () => {
+      localStorage.setItem('lastActivity', Date.now().toString());
+    };
+
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+
+    updateActivity();
+
+    return () => {
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+    };
+  }, []);
+
+  // ✅ FIXED AUTO LOGOUT
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const last = localStorage.getItem('lastActivity');
+
+      if (!last) return;
+
+      const inactiveTime = Date.now() - Number(last);
+
+      if (inactiveTime > 60 * 60 * 1000) {
+        localStorage.removeItem('token');
+
+        localStorage.removeItem('user');
+
+        localStorage.removeItem('userId');
+
+        localStorage.removeItem('artistName');
+
+        localStorage.removeItem('role');
+
+        localStorage.removeItem('verifyEmail');
+
+        localStorage.removeItem('lastActivity');
+
+        window.location.href = '/login'; // ✅ correct
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ protect
+  const protect = (component) => {
+    return isAuth ? component : <Navigate to="/login" replace />;
   };
 
-  const withLayout = (component) => {
-    return <Layout>{component}</Layout>;
-  };
+  const protectAdmin = (component) => {
+
+  const role =
+    localStorage.getItem('role');
+
+  if (!isAuth) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  }
+
+  if (role !== 'admin') {
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
+  }
+
+  return component;
+};
 
   return (
     <BrowserRouter>
       <Routes>
 
         {/* PUBLIC */}
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/edit/:id" element={<EditRelease />} />
-        <Route path="/my-music" element={<MyReleases />} />
-        <Route path="/" element={<Landing />} />
+        <Route
+          path="/"
+          element={
+            isAuth
+              ? <Navigate to="/dashboard" replace />
+              : <Landing />
+          }
+        />
+        
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/success" element={<Success />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/withdraw/paypal" element={protect(withLayout(<PaypalWithdraw />))} />
-
-        {/* STATIC */}
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/pricing" element={<Pricing />} />
 
         {/* PAYMENT */}
         <Route path="/payment" element={<Payment />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/payment-cancel" element={<PaymentCancel />} />
 
-        {/* PUBLIC RELEASE */}
+        {/* PUBLIC */}
         <Route path="/release/:slug" element={<PublicRelease />} />
         <Route path="/smart/:slug" element={<SmartLink />} />
 
-        {/* TAX */}
-        <Route path="/tax" element={<TaxForm />} />
-
-        {/* ONBOARDING */}
-        <Route path="/onboarding" element={protect(withLayout(<PayoutOnboarding />))} />
+        {/* PROTECTED */}
+        <Route path="/dashboard" element={protect(<Layout><Dashboard /></Layout>)} />
+        <Route path="/upload" element={protect(<Layout><CreateRelease /></Layout>)} />
+        <Route path="/create-release" element={protect(<Layout><CreateRelease /></Layout>)} />
+        <Route path="/music" element={protect(<Layout><MusicPlayer /></Layout>)} />
+        <Route path="/my-music" element={protect(<Layout><MyMusic /></Layout>)} />
+        <Route path="/my-releases" element={protect(<Layout><MyReleases /></Layout>)} />
+        <Route path="/analytics" element={protect(<Layout><Analytics /></Layout>)} />
+        <Route path="/royalties" element={protect(<Layout><Royalties /></Layout>)} />
+        <Route path="/withdraw" element={protect(<Layout><Withdraw /></Layout>)} />
+        <Route path="/withdraw/paypal" element={protect(<Layout><PaypalWithdraw /></Layout>)} />
+        <Route path="/connect-stripe" element={protect(<Layout><ConnectStripe /></Layout>)} />
+        <Route path="/profile" element={protect(<Layout><Profile /></Layout>)} />
+        <Route path="/collaborators" element={protect(<Layout><Collaborators /></Layout>)} />
+        <Route path="/report" element={protect(<Layout><Report /></Layout>)} />
+        <Route path="/tax" element={protect(<Layout><TaxForm /></Layout>)} />
+        <Route path="/onboarding" element={protect(<Layout><PayoutOnboarding /></Layout>)} />
+        <Route path="/edit/:id" element={protect(<Layout><EditRelease /></Layout>)} />
 
         {/* SETTINGS */}
-        <Route path="/settings/subscription" element={protect(withLayout(<Subscription />))} />
-
-        <Route path="/settings" element={protect(withLayout(<SettingsLayout />))}>
-          <Route path="contact" element={<Contact />} />
-          <Route path="card" element={<Card />} />
-        </Route>
-
-        {/* USER */}
-        <Route path="/dashboard" element={protect(withLayout(<Dashboard />))} />
-        <Route path="/upload" element={protect(withLayout(<CreateRelease />))} />
-        <Route path="/create-release" element={protect(withLayout(<CreateRelease />))} />
-        <Route path="/music" element={protect(withLayout(<MusicPlayer />))} />
-        <Route path="/my-music" element={protect(withLayout(<MyMusic />))} />
-        <Route path="/my-releases" element={protect(withLayout(<MyReleases />))} />
-        <Route path="/analytics" element={protect(withLayout(<Analytics />))} />
-        <Route path="/royalties" element={protect(withLayout(<Royalties />))} />
-        <Route path="/withdraw" element={protect(withLayout(<Withdraw />))} />
-        <Route path="/connect-stripe" element={protect(withLayout(<ConnectStripe />))} />
-        <Route path="/profile" element={protect(withLayout(<Profile />))} />
-        <Route path="/collaborators" element={protect(withLayout(<Collaborators />))} />
-        <Route path="/report" element={protect(withLayout(<Report />))} />
-
-        {/* PRICING */}
-        <Route path="/pricing" element={<Pricing />} />
+       <Route
+  path="/settings"
+  element={protect(<Layout><SettingsLayout /></Layout>)}
+>
+  <Route path="subscription" element={<Subscription />} />
+  <Route path="contact" element={<Contact />} />
+  <Route path="card" element={<Card />} />
+  <Route path="contract" element={<Contract />} />
+  <Route path="card-form" element={<CardForm />} />
+  <Route path="music" element={<ManageMusic />} />
+  <Route path="delete-account" element={<DeleteAccount />} />
+</Route>
 
         {/* ADMIN */}
         <Route path="/admin" element={protect(<AdminLayout><AdminDashboard /></AdminLayout>)} />
@@ -158,9 +268,8 @@ function App() {
         <Route path="/admin/finance" element={protect(<AdminLayout><AdminFinanceDashboard /></AdminLayout>)} />
         <Route path="/admin/withdraw" element={protect(<AdminLayout><AdminWithdraw /></AdminLayout>)} />
         <Route path="/admin/tax" element={protect(<AdminLayout><AdminTax /></AdminLayout>)} />
-        <Route path="/admin/approvals/albums" element={<AdminAlbums />} />
+        <Route path="/admin/approvals/albums" element={protect(<AdminLayout><AdminAlbums /></AdminLayout>)} />
 
-        {/* ✅ SAFE FALLBACK */}
         <Route path="*" element={<div style={{color:'#fff', padding:20}}>Page not found</div>} />
 
       </Routes>

@@ -1,64 +1,156 @@
 import axios from 'axios';
 
+//////////////////////////////////////////////////
+// 🔥 API URL
+//////////////////////////////////////////////////
 const API_URL =
-  import.meta.env.VITE_API_URL ||
-  'https://kasuku-backend.onrender.com';
+  window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://kasuku-backend.onrender.com';
 
+//////////////////////////////////////////////////
+// 🔥 AXIOS INSTANCE
+//////////////////////////////////////////////////
 export const api = axios.create({
   baseURL: API_URL,
+
+  withCredentials: false,
 });
 
-// ================================
+//////////////////////////////////////////////////
 // 🔐 REQUEST INTERCEPTOR
-// ================================
+//////////////////////////////////////////////////
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
 
-    console.log('🔥 TOKEN:', token);
+    const token =
+      localStorage.getItem('token');
 
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
+    console.log(
+      '🔥 TOKEN:',
+      token,
+    );
+
+    //////////////////////////////////////////////////
+    // 🔒 ATTACH TOKEN
+    //////////////////////////////////////////////////
+    if (
+      token &&
+      token !== 'undefined' &&
+      token !== 'null'
+    ) {
+
+      config.headers =
+        config.headers || {};
+
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+
+  (error) =>
+    Promise.reject(error),
 );
 
-// ================================
-// 🚨 RESPONSE INTERCEPTOR (FIXED)
-// ================================
+//////////////////////////////////////////////////
+// 🚨 RESPONSE INTERCEPTOR
+//////////////////////////////////////////////////
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API ERROR:', error?.response || error);
 
-    if (error?.response?.status === 401) {
-      console.warn('Unauthorized request ⚠️');
+  (response) => response,
+
+  (error) => {
+
+    console.error(
+      '❌ API ERROR:',
+      error?.response || error,
+    );
+
+    const status =
+      error?.response?.status;
+
+    //////////////////////////////////////////////////
+    // 🔒 UNAUTHORIZED
+    //////////////////////////////////////////////////
+    if (status === 401) {
+
+      console.warn(
+        '⚠️ Session expired',
+      );
+
+      //////////////////////////////////////////////////
+      // 🔥 CLEAR SESSION
+      //////////////////////////////////////////////////
+      localStorage.removeItem(
+        'token',
+      );
+
+      localStorage.removeItem(
+        'user',
+      );
+
+      localStorage.removeItem(
+        'userId',
+      );
+
+      localStorage.removeItem(
+        'artistName',
+      );
+
+      localStorage.removeItem(
+        'role',
+      );
+
+      //////////////////////////////////////////////////
+      // 🔥 REDIRECT
+      //////////////////////////////////////////////////
+      if (
+        window.location.pathname !==
+        '/login'
+      ) {
+        window.location.href =
+          '/login';
+      }
     }
 
-    // 🔥 NEW
-    if (error?.response?.status === 403) {
-      console.warn('Subscription required 🚀');
+    //////////////////////////////////////////////////
+    // 🚀 SUBSCRIPTION REQUIRED
+    //////////////////////////////////////////////////
+    if (status === 403) {
 
-      const currentPath = window.location.pathname;
-      localStorage.setItem('redirectAfterLogin', currentPath);
+      console.warn(
+        '🚀 Subscription required',
+      );
 
-      window.location.href = '/pricing';
+      const currentPath =
+        window.location.pathname;
+
+      localStorage.setItem(
+        'redirectAfterLogin',
+        currentPath,
+      );
+
+      window.location.href =
+        '/pricing';
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
-// ========================================
-// 🎵 RELEASE API (UNCHANGED)
-// ========================================
+//////////////////////////////////////////////////
+// 🎵 RELEASE API
+//////////////////////////////////////////////////
 
-export const createRelease = (data: any) => {
-  return api.post('/releases/upload-full', data);
+export const createRelease = (
+  data: any,
+) => {
+  return api.post(
+    '/releases/upload-full',
+    data,
+  );
 };
 
 export const getReleases = () => {
@@ -71,23 +163,33 @@ export const getMyReleases = () => {
 
 export const uploadTrackToRelease = (
   releaseId: number,
-  formData: FormData
+  formData: FormData,
 ) => {
+
   return api.post(
     `/releases/${releaseId}/upload-track`,
     formData,
     {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type':
+          'multipart/form-data',
       },
-    }
+    },
   );
 };
 
-export const distributeRelease = (releaseId: number) => {
-  return api.post(`/releases/${releaseId}/distribute`);
+export const distributeRelease = (
+  releaseId: number,
+) => {
+  return api.post(
+    `/releases/${releaseId}/distribute`,
+  );
 };
 
-export const deleteRelease = (id: number) => {
-  return api.delete(`/releases/${id}`);
+export const deleteRelease = (
+  id: number,
+) => {
+  return api.delete(
+    `/releases/${id}`,
+  );
 };

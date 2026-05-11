@@ -7,7 +7,7 @@ export default function Layout({ children }) {
 
   const [user, setUser] = useState(null);
 
-  // 🔥 NEW: GET USER FROM TOKEN (FIXED FOREVER)
+  // ✅ GET USER FROM TOKEN
   useEffect(() => {
     const token = localStorage.getItem('token');
 
@@ -19,12 +19,22 @@ export default function Layout({ children }) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
 
-      setUser({
-        userId: payload.userId,
-        email: payload.email,
-        artistName: payload.artistName,
-        isAdmin: payload.isAdmin || false,
-      });
+ setUser({
+  userId: payload.userId,
+  email: payload.email,
+  artistName: payload.artistName,
+  role: payload.role,
+
+  // ✅ PLAN
+  plan: payload.plan || 1,
+
+  // ✅ SUBSCRIPTION
+  subscriptionActive:
+    payload.subscriptionActive || false,
+
+  // ✅ ADMIN
+  isAdmin: payload.role === 'admin',
+});
 
     } catch (err) {
       console.log('Invalid token → clearing');
@@ -34,10 +44,50 @@ export default function Layout({ children }) {
     }
   }, []);
 
+  // 🔥 AUTO LOGOUT (30 MINUTES)
+  useEffect(() => {
+    let timeout;
+
+    const logoutUser = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/');
+    };
+
+    const resetTimer = () => {
+      clearTimeout(timeout);
+
+      timeout = setTimeout(() => {
+        logoutUser();
+      }, 30 * 60 * 1000); // ✅ 30 minutes
+    };
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('click', resetTimer);
+    window.addEventListener('scroll', resetTimer);
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      window.removeEventListener('scroll', resetTimer);
+    };
+  }, [navigate]);
+
+  // ✅ LOGOUT BUTTON
   const logout = () => {
-    localStorage.removeItem('token');
-    window.location.reload();
-  };
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+
+  setUser(null);
+
+  // 🔥 FORCE APP RESET
+  window.location.href = '/';
+};
 
   const menu = [
     { name: '📊 Dashboard', path: '/dashboard' },
@@ -58,10 +108,13 @@ export default function Layout({ children }) {
       <div style={styles.sidebar}>
         <h2 style={styles.logo}>🎵 KASUKU</h2>
 
-        {/* 🚀 PRO BADGE */}
-        {user?.subscriptionActive && (
-          <div style={styles.proBadge}>🚀 PRO</div>
-        )}
+        {user?.plan === 'pro' && (
+  <div style={styles.proBadge}>🚀 PRO</div>
+)}
+
+{user?.plan === 'enterprise' && (
+  <div style={styles.proBadge}>👑 ENTERPRISE</div>
+)}
 
         <div style={styles.menu}>
           {menu.map((item) => {
@@ -82,24 +135,25 @@ export default function Layout({ children }) {
           })}
         </div>
 
-        {/* 👑 ADMIN BUTTON */}
         {user?.isAdmin && (
-          <div
-            onClick={() => navigate('/admin')}
-            style={styles.item}
-          >
+          <div onClick={() => navigate('/admin')} style={styles.item}>
             👑 Admin
           </div>
         )}
 
-        {/* USER INFO */}
         <div style={styles.bottom}>
           <div style={styles.user}>
             👤 {user?.artistName || user?.email || 'User'}
           </div>
 
           <div style={styles.plan}>
-            {user?.subscriptionActive ? 'Subscribed ✅' : 'Free Plan'}
+  {
+  user?.plan === 'enterprise'
+    ? 'Enterprise Plan 🚀'
+    : user?.plan === 'pro'
+    ? 'Pro Plan 💎'
+    : 'Free Plan'
+}
           </div>
 
           <button style={styles.logout} onClick={logout}>

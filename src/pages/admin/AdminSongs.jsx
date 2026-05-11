@@ -19,41 +19,88 @@ export default function AdminSongs() {
 
       const res = await api.get(endpoint);
 
-      let data = res.data;
+      let data = res.data || [];
 
-      // ✅ filter approved manually
+      // ✅ APPROVED
       if (tab === 'approved') {
-        data = data.filter((r) => r.approvalStatus === 'approved');
+        data = data.filter(
+          (r) =>
+            r.approvalStatus === 'approved'
+        );
+      }
+
+      // ❌ REJECTED
+      if (tab === 'rejected') {
+        data = data.filter(
+          (r) =>
+            r.approvalStatus === 'rejected'
+        );
       }
 
       setSongs(data);
+
     } catch (err) {
       console.log(err);
     }
   };
 
+  // =========================
+  // ✅ APPROVE
+  // =========================
   const approve = async (id) => {
     try {
-      await api.post(`/releases/admin/${id}/approve`);
-      setSongs((prev) => prev.filter((s) => s.id !== id));
+      await api.post(
+        `/releases/admin/${id}/approve`
+      );
+
+      setSongs((prev) =>
+        prev.filter((s) => s.id !== id)
+      );
+
     } catch (err) {
       console.log(err);
+      alert('Approval failed ❌');
     }
   };
 
+  // =========================
+  // ❌ REJECT
+  // =========================
   const reject = async (id) => {
-  const reason = prompt('Enter rejection reason');
+    try {
+      const reason = prompt(
+        'Enter rejection reason'
+      );
 
-  await api.post(`/admin/songs/reject/${id}`, {
-    reason,
-  });
+      if (!reason) return;
 
-  setSongs(prev => prev.filter(s => s.id !== id));
-};
+      await api.post(
+        `/releases/admin/${id}/reject`,
+        {
+          reason,
+        }
+      );
 
+      setSongs((prev) =>
+        prev.filter((s) => s.id !== id)
+      );
+
+    } catch (err) {
+      console.log(err);
+      alert('Reject failed ❌');
+    }
+  };
+
+  // =========================
+  // 🔍 FILTER SEARCH
+  // =========================
   const filtered = songs.filter((s) =>
-    s.title.toLowerCase().includes(search.toLowerCase()) ||
-    s.artistName.toLowerCase().includes(search.toLowerCase())
+    s.title
+      ?.toLowerCase()
+      .includes(search.toLowerCase()) ||
+    s.artistName
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   return (
@@ -61,11 +108,19 @@ export default function AdminSongs() {
 
       {/* HEADER */}
       <div style={styles.header}>
-        <h2 style={{ margin: 0 }}>🎵 Songs</h2>
+        <h2 style={{ margin: 0 }}>
+          🎵 Songs
+        </h2>
+
         <p style={{ opacity: 0.6 }}>
-          {tab === 'pending'
-            ? `${songs.length} pending songs`
-            : `${songs.length} approved songs`}
+          {tab === 'pending' &&
+            `${songs.length} pending songs`}
+
+          {tab === 'approved' &&
+            `${songs.length} approved songs`}
+
+          {tab === 'rejected' &&
+            `${songs.length} rejected songs`}
         </p>
       </div>
 
@@ -73,41 +128,72 @@ export default function AdminSongs() {
       <input
         placeholder="Search by title or artist..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) =>
+          setSearch(e.target.value)
+        }
         style={styles.search}
       />
 
       {/* TABS */}
       <div style={styles.tabs}>
+
+        {/* PENDING */}
         <div
           onClick={() => setTab('pending')}
           style={{
             ...styles.tab,
-            ...(tab === 'pending' ? styles.activeTab : {}),
+            ...(tab === 'pending'
+              ? styles.activeTab
+              : {}),
           }}
         >
           Pending
         </div>
 
+        {/* APPROVED */}
         <div
           onClick={() => setTab('approved')}
           style={{
             ...styles.tab,
-            ...(tab === 'approved' ? styles.activeTab : {}),
+            ...(tab === 'approved'
+              ? styles.activeTab
+              : {}),
           }}
         >
           Approved
         </div>
+
+        {/* REJECTED */}
+        <div
+          onClick={() => setTab('rejected')}
+          style={{
+            ...styles.tab,
+            ...(tab === 'rejected'
+              ? styles.activeTab
+              : {}),
+          }}
+        >
+          Rejected
+        </div>
+
       </div>
 
-      {/* LIST */}
+      {/* EMPTY */}
       {filtered.length === 0 && (
-        <p style={{ opacity: 0.6 }}>No songs found</p>
+        <p style={{ opacity: 0.6 }}>
+          No songs found
+        </p>
       )}
 
+      {/* LIST */}
       <div style={styles.grid}>
+
         {filtered.map((song) => (
-          <div key={song.id} style={styles.card}>
+
+          <div
+            key={song.id}
+            style={styles.card}
+          >
 
             {/* COVER */}
             <img
@@ -118,8 +204,49 @@ export default function AdminSongs() {
 
             {/* INFO */}
             <div style={styles.info}>
-              <h3 style={{ margin: 0 }}>{song.title}</h3>
-              <p style={styles.artist}>{song.artistName}</p>
+
+              <h3 style={{ margin: 0 }}>
+                {song.title}
+              </h3>
+
+              <p style={styles.artist}>
+                {song.artistName}
+              </p>
+
+              {/* STATUS */}
+              <div
+                style={{
+                  marginBottom: 10,
+                  fontSize: 13,
+                  color:
+                    song.approvalStatus ===
+                    'approved'
+                      ? '#16a34a'
+                      : song.approvalStatus ===
+                        'rejected'
+                      ? '#ff4d6d'
+                      : '#facc15',
+                }}
+              >
+                ● {song.approvalStatus}
+              </div>
+
+              {/* REJECTION REASON */}
+              {song.rejectionReason && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: 10,
+                    borderRadius: 10,
+                    background: '#2a0a0f',
+                    color: '#ff4d6d',
+                    fontSize: 13,
+                    marginBottom: 10,
+                  }}
+                >
+                  ❌ {song.rejectionReason}
+                </div>
+              )}
 
               {/* AUDIO */}
               <audio
@@ -127,29 +254,38 @@ export default function AdminSongs() {
                 src={`http://localhost:3000${song.music?.[0]?.fileUrl}`}
                 style={styles.audio}
               />
+
             </div>
 
             {/* ACTIONS */}
             {tab === 'pending' && (
               <div style={styles.actions}>
+
                 <button
-                  onClick={() => approve(song.id)}
+                  onClick={() =>
+                    approve(song.id)
+                  }
                   style={styles.approve}
                 >
                   ✔ Approve
                 </button>
 
                 <button
-                  onClick={() => reject(song.id)}
+                  onClick={() =>
+                    reject(song.id)
+                  }
                   style={styles.reject}
                 >
                   ✖ Reject
                 </button>
+
               </div>
             )}
 
           </div>
+
         ))}
+
       </div>
 
     </div>
@@ -162,6 +298,7 @@ const styles = {
     maxWidth: 1100,
     margin: '0 auto',
     padding: '20px 0',
+    color: '#fff',
   },
 
   header: {
@@ -176,6 +313,7 @@ const styles = {
     background: '#0f172a',
     color: '#fff',
     marginBottom: 20,
+    outline: 'none',
   },
 
   tabs: {
@@ -190,10 +328,12 @@ const styles = {
     cursor: 'pointer',
     background: '#111',
     border: '1px solid #222',
+    transition: '0.2s',
   },
 
   activeTab: {
-    background: 'linear-gradient(135deg, #ff003c, #7c3aed)',
+    background:
+      'linear-gradient(135deg, #ff003c, #7c3aed)',
   },
 
   grid: {

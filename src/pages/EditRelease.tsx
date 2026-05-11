@@ -10,10 +10,38 @@ export default function EditRelease() {
 
   const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState({
-    title: '',
-    artistName: '',
-  });
+  const userPlan =
+  localStorage.getItem('plan');
+
+const canEditLabel =
+  userPlan === 'artist' ||
+  userPlan === 'pro';
+
+const [form, setForm] = useState({
+  title: '',
+  artistName: '',
+
+  labelName: '',
+
+  primaryGenre: '',
+  secondaryGenre: '',
+
+  language: '',
+
+  contentRating: 'clean',
+
+  songwriter: '',
+
+  composer: '',
+
+  producer: '',
+
+  copyrightOwner: '',
+
+  publishingRights: '',
+
+  releaseVersion: '',
+});
 
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -23,9 +51,16 @@ export default function EditRelease() {
   //////////////////////////////////////////////////
   // FETCH
   //////////////////////////////////////////////////
-  useEffect(() => {
-    fetchRelease();
-  }, []);
+  const [fetched, setFetched] =
+  useState(false);
+
+useEffect(() => {
+  if (fetched) return;
+
+  setFetched(true);
+
+  fetchRelease();
+}, [fetched]);
 
   const fetchRelease = async () => {
     try {
@@ -33,10 +68,45 @@ export default function EditRelease() {
 
       const data = res.data;
 
-      setForm({
-        title: data.title || '',
-        artistName: data.artistName || '',
-      });
+     setForm({
+  title: data.title || '',
+
+  artistName:
+    data.artistName || '',
+
+  labelName:
+    data.labelName || '',
+
+  primaryGenre:
+    data.primaryGenre || '',
+
+  secondaryGenre:
+    data.secondaryGenre || '',
+
+  language:
+    data.language || '',
+
+  contentRating:
+    data.contentRating || 'clean',
+
+  songwriter:
+    data.songwriter || '',
+
+  composer:
+    data.composer || '',
+
+  producer:
+    data.producer || '',
+
+  copyrightOwner:
+    data.copyrightOwner || '',
+
+  publishingRights:
+    data.publishingRights || '',
+
+  releaseVersion:
+    data.releaseVersion || '',
+});
 
       if (data.music?.[0]?.coverUrl) {
         setCoverPreview(
@@ -49,7 +119,9 @@ export default function EditRelease() {
       setLoading(false);
     } catch (err) {
       console.log(err);
-      alert('❌ Failed to load release');
+      console.log(
+  'Failed to load release',
+);
       setLoading(false);
     }
   };
@@ -83,6 +155,61 @@ export default function EditRelease() {
 
       formData.append('title', form.title);
       formData.append('artistName', form.artistName);
+
+      formData.append(
+  'labelName',
+  form.labelName,
+);
+
+formData.append(
+  'primaryGenre',
+  form.primaryGenre,
+);
+
+formData.append(
+  'secondaryGenre',
+  form.secondaryGenre,
+);
+
+formData.append(
+  'language',
+  form.language,
+);
+
+formData.append(
+  'contentRating',
+  form.contentRating,
+);
+
+formData.append(
+  'songwriter',
+  form.songwriter,
+);
+
+formData.append(
+  'composer',
+  form.composer,
+);
+
+formData.append(
+  'producer',
+  form.producer,
+);
+
+formData.append(
+  'copyrightOwner',
+  form.copyrightOwner,
+);
+
+formData.append(
+  'publishingRights',
+  form.publishingRights,
+);
+
+formData.append(
+  'releaseVersion',
+  form.releaseVersion,
+);
 
       if (coverFile) formData.append('cover', coverFile);
       if (audioFile) formData.append('file', audioFile);
@@ -145,6 +272,174 @@ export default function EditRelease() {
           placeholder="Artist"
           style={styles.input}
         />
+
+        {/* LABEL */}
+<input
+  value={form.labelName}
+  disabled={!canEditLabel}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      labelName: e.target.value,
+    })
+  }
+  placeholder={
+    canEditLabel
+      ? 'Label Name'
+      : 'Kasuku'
+  }
+  style={{
+    ...styles.input,
+    opacity: canEditLabel ? 1 : 0.6,
+  }}
+/>
+
+{/* PRIMARY GENRE */}
+<input
+  value={form.primaryGenre}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      primaryGenre:
+        e.target.value,
+    })
+  }
+  placeholder="Primary Genre"
+  style={styles.input}
+/>
+
+{/* SECONDARY GENRE */}
+<input
+  value={form.secondaryGenre}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      secondaryGenre:
+        e.target.value,
+    })
+  }
+  placeholder="Secondary Genre"
+  style={styles.input}
+/>
+
+{/* LANGUAGE */}
+<input
+  value={form.language}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      language:
+        e.target.value,
+    })
+  }
+  placeholder="Language"
+  style={styles.input}
+/>
+
+{/* EXPLICIT */}
+<select
+  value={form.contentRating}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      contentRating:
+        e.target.value,
+    })
+  }
+  style={styles.input}
+>
+  <option value="clean">
+    Clean
+  </option>
+
+  <option value="explicit">
+    Explicit
+  </option>
+</select>
+
+{/* SONGWRITER */}
+<input
+  value={form.songwriter}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      songwriter:
+        e.target.value,
+    })
+  }
+  placeholder="Songwriter"
+  style={styles.input}
+/>
+
+{/* COMPOSER */}
+<input
+  value={form.composer}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      composer:
+        e.target.value,
+    })
+  }
+  placeholder="Composer"
+  style={styles.input}
+/>
+
+{/* PRODUCER */}
+<input
+  value={form.producer}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      producer:
+        e.target.value,
+    })
+  }
+  placeholder="Producer"
+  style={styles.input}
+/>
+
+{/* COPYRIGHT */}
+<input
+  value={form.copyrightOwner}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      copyrightOwner:
+        e.target.value,
+    })
+  }
+  placeholder="Copyright Owner"
+  style={styles.input}
+/>
+
+{/* PUBLISHING */}
+<input
+  value={form.publishingRights}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      publishingRights:
+        e.target.value,
+    })
+  }
+  placeholder="Publishing Rights"
+  style={styles.input}
+/>
+
+{/* VERSION */}
+<input
+  value={form.releaseVersion}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      releaseVersion:
+        e.target.value,
+    })
+  }
+  placeholder="Version (Live, Remix, Acoustic)"
+  style={styles.input}
+/>
 
         {/* AUDIO */}
         <label style={styles.uploadBox}>

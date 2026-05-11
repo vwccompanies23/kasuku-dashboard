@@ -123,3 +123,14 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes moveBg {
+  0% { transform: translate(0,0); }
+  100% { transform: translate(-40px, 40px); }
+}

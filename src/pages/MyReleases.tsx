@@ -5,59 +5,104 @@ import WaveSurfer from 'wavesurfer.js';
 
 import logo from '../assets/kasuku-logo.png';
 
-const BASE_URL = 'https://kasuku-backend.onrender.com';
+//////////////////////////////////////////////////
+// 🔥 BACKEND URL
+//////////////////////////////////////////////////
+const BASE_URL = 'http://localhost:3000';
 
+//////////////////////////////////////////////////
 // 🔥 FIX URL
+//////////////////////////////////////////////////
 const fixUrl = (path) => {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
-  if (path.startsWith('/')) return `${BASE_URL}${path}`;
+
+  if (path.startsWith('http')) {
+    return path;
+  }
+
+  if (path.startsWith('/')) {
+    return `${BASE_URL}${path}`;
+  }
+
   return `${BASE_URL}/uploads/${path}`;
 };
 
 //////////////////////////////////////////////////
-// 🔥 AUDIO PLAYER (REAL WAVEFORM)
+// 🔥 AUDIO PLAYER
 //////////////////////////////////////////////////
 const AudioPlayer = ({ src }) => {
   const ref = useRef(null);
   const ws = useRef(null);
-  const [playing, setPlaying] = useState(false);
+
+  const [playing, setPlaying] =
+    useState(false);
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current || !src) return;
 
-    if (ws.current) ws.current.destroy();
+    if (ws.current) {
+      ws.current.destroy();
+    }
 
     ws.current = WaveSurfer.create({
       container: ref.current,
+
       waveColor: '#7c3aed',
+
       progressColor: '#ff003c',
-      cursorColor: '#fff',
+
+      cursorColor: '#ffffff',
+
       barWidth: 3,
-      barRadius: 3,
-      height: 80,
+
+      barRadius: 4,
+
+      height: 70,
+
       responsive: true,
+
       normalize: true,
     });
 
     ws.current.load(src);
 
-    ws.current.on('finish', () => setPlaying(false));
+    ws.current.on('finish', () => {
+      setPlaying(false);
+    });
 
-    return () => ws.current.destroy();
+    return () => {
+      if (ws.current) {
+        ws.current.destroy();
+      }
+    };
   }, [src]);
 
   const toggle = () => {
+    if (!ws.current) return;
+
     ws.current.playPause();
+
     setPlaying(!playing);
   };
 
   return (
-    <div style={{ marginTop: 10 }}>
-      <div ref={ref} style={{ borderRadius: 10, overflow: 'hidden' }} />
+    <div style={{ marginTop: 14 }}>
+      <div
+        ref={ref}
+        style={{
+          width: '100%',
+          overflow: 'hidden',
+          borderRadius: 12,
+        }}
+      />
 
-      <button onClick={toggle} style={styles.playBtn}>
-        {playing ? '⏸ Pause' : '▶️ Play'}
+      <button
+        onClick={toggle}
+        style={styles.playBtn}
+      >
+        {playing
+          ? '⏸ Pause'
+          : '▶️ Play'}
       </button>
     </div>
   );
@@ -67,146 +112,385 @@ const AudioPlayer = ({ src }) => {
 // 🔥 MAIN COMPONENT
 //////////////////////////////////////////////////
 export default function MyReleases() {
-  const [releases, setReleases] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [releases, setReleases] =
+    useState([]);
 
-  useEffect(() => {
-    fetchReleases();
-    const interval = setInterval(fetchReleases, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const [filter, setFilter] =
+    useState('pending');
 
-  useEffect(() => {
-    const socket = io(BASE_URL);
+  const [loading, setLoading] =
+    useState(true);
 
-    socket.on('release:update', (data) => {
-      setReleases((prev) =>
-        prev.map((r) =>
-          r.id === data.releaseId
-            ? { ...r, status: data.status }
-            : r
-        )
-      );
-    });
-
-    return () => socket.disconnect();
-  }, []);
-
+  //////////////////////////////////////////////////
+  // 🔥 FETCH RELEASES
+  //////////////////////////////////////////////////
   const fetchReleases = async () => {
     try {
-      let res = await api.get('/releases/me');
+      const userId =
+        localStorage.getItem('userId');
 
-      if (!res.data || res.data.length === 0) {
-        const userId = localStorage.getItem('userId') || '1';
-        const alt = await api.get(`/music?userId=${userId}`);
+      console.log(
+        '🔥 USER ID:',
+        userId,
+      );
 
-        const mapped = alt.data.map((m) => ({
-          id: m.id,
-          title: m.title,
-          artistName: m.artist,
-          status: m.status || 'pending',
-          music: [
-            {
-              fileUrl: m.fileUrl,
-              coverUrl: m.coverUrl,
-            },
-          ],
-        }));
+      if (!userId) {
+        console.log(
+          '❌ NO USER ID FOUND',
+        );
 
-        setReleases(mapped);
+        setReleases([]);
+        setLoading(false);
         return;
       }
 
-      setReleases(res.data);
+      //////////////////////////////////////////////////
+      // 🔥 IMPORTANT FIX
+      //////////////////////////////////////////////////
+      const res = await api.get(
+        `/music?userId=${userId}`,
+      );
+
+      console.log(
+        '🔥 MUSIC RESPONSE:',
+        res.data,
+      );
+
+      if (!Array.isArray(res.data)) {
+        setReleases([]);
+        setLoading(false);
+        return;
+      }
+
+      //////////////////////////////////////////////////
+      // 🔥 FIX DATA
+      //////////////////////////////////////////////////
+      const mapped = res.data.map(
+        (m) => ({
+          id: m.id,
+
+          title:
+            m.title || 'Untitled',
+
+          artistName:
+            m.artistName ||
+            m.artist ||
+            'Unknown Artist',
+
+          status:
+            m.status || 'processing',
+
+          coverUrl:
+            m.coverUrl ||
+            m.cover ||
+            null,
+
+          fileUrl:
+            m.fileUrl ||
+            m.cloudinaryUrl ||
+            null,
+        }),
+      );
+
+      console.log(
+        '🔥 FINAL RELEASES:',
+        mapped,
+      );
+
+      setReleases(mapped);
+
+      setLoading(false);
     } catch (err) {
+      console.log(
+        '❌ FETCH RELEASES ERROR',
+      );
+
       console.log(err);
+
+      setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete?')) return;
+  //////////////////////////////////////////////////
+  // 🔥 INITIAL LOAD
+  //////////////////////////////////////////////////
+  useEffect(() => {
+    fetchReleases();
+
+    const interval = setInterval(() => {
+      fetchReleases();
+    }, 5000);
+
+    return () =>
+      clearInterval(interval);
+  }, []);
+
+  //////////////////////////////////////////////////
+  // 🔥 SOCKET
+  //////////////////////////////////////////////////
+  useEffect(() => {
+    const socket = io(BASE_URL);
+
+    socket.on(
+      'release:update',
+      (data) => {
+        setReleases((prev) =>
+          prev.map((r) =>
+            r.id === data.releaseId
+              ? {
+                  ...r,
+                  status: data.status,
+                }
+              : r,
+          ),
+        );
+      },
+    );
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  //////////////////////////////////////////////////
+  // 🔥 DELETE
+  //////////////////////////////////////////////////
+  const handleDelete = async (
+    id,
+  ) => {
+    const ok = window.confirm(
+      'Delete this release?',
+    );
+
+    if (!ok) return;
 
     try {
-      await api.delete(`/music/${id}`);
+      await api.delete(
+        `/music/${id}`,
+      );
+
       fetchReleases();
-    } catch {
-      alert('Delete failed');
+    } catch (err) {
+      console.log(err);
+
+      alert('Delete failed ❌');
     }
   };
 
-  const filtered = releases.filter((r) =>
-    filter === 'all' ? true : r.status === filter
-  );
+  //////////////////////////////////////////////////
+  // 🔥 FILTER
+  //////////////////////////////////////////////////
+  const filtered =
+    releases.filter((r) => {
+      if (filter === 'all') {
+        return true;
+      }
 
+      if (filter === 'pending') {
+        return [
+          'pending',
+          'processing',
+        ].includes(r.status);
+      }
+
+      return r.status === filter;
+    });
+
+  //////////////////////////////////////////////////
+  // 🔥 UI
+  //////////////////////////////////////////////////
   return (
     <div style={styles.container}>
+      {/* 🔥 BACKGROUND GLOW */}
+      <div style={styles.glow1} />
 
-      {/* 🔥 RED GLOW BACKGROUND LIKE YOUR IMAGE */}
+      <div style={styles.glow2} />
+
+      {/* 🔥 HEADER */}
       <div style={styles.header}>
-      <img src={logo} style={styles.logo} />
-      <h1 style={styles.title}>My Releases</h1>
+        <div style={styles.logoWrap}>
+          {/* 🔥 LOGO */}
+          <img
+            src={logo}
+            alt="Kasuku Logo"
+            style={styles.logo}
+          />
+
+          <div>
+            <h1 style={styles.title}>
+              My Releases
+            </h1>
+
+            <p style={styles.subtitle}>
+              Track all your published
+              and pending releases
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* TABS */}
+      {/* 🔥 FILTERS */}
       <div style={styles.tabs}>
-        {['all','pending','reviewing','approved','live','draft'].map((t) => (
-          <div
+        {[
+          'pending',
+          'approved',
+          'live',
+          'draft',
+          'all',
+        ].map((t) => (
+          <button
             key={t}
-            onClick={() => setFilter(t)}
+            onClick={() =>
+              setFilter(t)
+            }
             style={{
               ...styles.tab,
+
               background:
                 filter === t
                   ? 'linear-gradient(90deg,#ff003c,#7c3aed)'
-                  : '#111',
+                  : 'rgba(255,255,255,0.05)',
             }}
           >
             {t.toUpperCase()}
-          </div>
+          </button>
         ))}
       </div>
 
-      {/* LIST */}
-      {filtered.map((r) => (
-        <div key={r.id} style={styles.card}>
-
+      {/* 🔥 LOADING */}
+      {loading && (
+        <div style={styles.empty}>
           <img
-            src={fixUrl(r.music?.[0]?.coverUrl)}
+            src={logo}
+            alt="Kasuku"
+            style={styles.emptyLogo}
+          />
+
+          <h2>Loading releases...</h2>
+        </div>
+      )}
+
+      {/* 🔥 EMPTY */}
+      {!loading &&
+        filtered.length === 0 && (
+          <div style={styles.empty}>
+            <img
+              src={logo}
+              alt="Kasuku"
+              style={
+                styles.emptyLogo
+              }
+            />
+
+            <h2>
+              No releases found
+            </h2>
+
+            <p>
+              Upload music and it
+              will appear here
+              automatically
+            </p>
+          </div>
+        )}
+
+      {/* 🔥 RELEASES */}
+      {filtered.map((r) => (
+        <div
+          key={r.id}
+          style={styles.card}
+        >
+          {/* 🔥 COVER */}
+          <img
+            src={
+              r.coverUrl
+                ? fixUrl(
+                    r.coverUrl,
+                  )
+                : logo
+            }
+            alt={r.title}
             style={styles.cover}
           />
 
+          {/* 🔥 INFO */}
           <div style={{ flex: 1 }}>
-            <h3>{r.title}</h3>
-            <p style={{ color: '#aaa' }}>{r.artistName}</p>
+            <h2 style={styles.songTitle}>
+              {r.title}
+            </h2>
 
-            {/* 🔥 REAL WAVE */}
-            {r.music?.map((track, i) => (
-              <AudioPlayer key={i} src={fixUrl(track.fileUrl)} />
-            ))}
+            <p style={styles.artist}>
+              {r.artistName}
+            </p>
 
-            {/* STATUS */}
-            <div style={{ marginTop: 10 }}>
-              <span style={getStatusStyle(r.status)}>
-                {r.status === 'pending' && '⏳ Waiting for review'}
-                {r.status === 'reviewing' && '👀 Under review'}
-                {r.status === 'approved' && '✅ Approved'}
-                {r.status === 'live' && '🚀 Live'}
-                {r.status === 'draft' && '📝 Draft'}
+            {/* 🔥 AUDIO */}
+            {r.fileUrl && (
+              <AudioPlayer
+                src={fixUrl(
+                  r.fileUrl,
+                )}
+              />
+            )}
+
+            {/* 🔥 STATUS */}
+            <div
+              style={{
+                marginTop: 16,
+              }}
+            >
+              <span
+                style={getStatusStyle(
+                  r.status,
+                )}
+              >
+                {[
+                  'pending',
+                  'processing',
+                ].includes(
+                  r.status,
+                ) &&
+                  '⏳ Pending'}
+
+                {r.status ===
+                  'approved' &&
+                  '✅ Approved'}
+
+                {r.status ===
+                  'live' &&
+                  '🚀 Live'}
+
+                {r.status ===
+                  'draft' &&
+                  '📝 Draft'}
               </span>
             </div>
 
-            {/* ACTIONS */}
-            <div style={{ display: 'flex', gap: 10 }}>
+            {/* 🔥 ACTIONS */}
+            <div
+              style={
+                styles.actions
+              }
+            >
               <button
-                onClick={() => window.location.href = `/edit/${r.id}`}
-                style={styles.editBtn}
+                onClick={() =>
+                  (window.location.href = `/edit/${r.id}`)
+                }
+                style={
+                  styles.editBtn
+                }
               >
                 ✏️ Edit
               </button>
 
               <button
-                onClick={() => handleDelete(r.id)}
-                style={styles.deleteBtn}
+                onClick={() =>
+                  handleDelete(
+                    r.id,
+                  )
+                }
+                style={
+                  styles.deleteBtn
+                }
               >
                 🗑 Delete
               </button>
@@ -219,108 +503,353 @@ export default function MyReleases() {
 }
 
 //////////////////////////////////////////////////
-// 🎨 PREMIUM STYLES
+// 🎨 STYLES
 //////////////////////////////////////////////////
-
 const styles = {
   container: {
-    padding: 25,
-    color: '#fff',
+    position: 'relative',
+
     minHeight: '100vh',
-    background: '#000',
+
+    padding: 25,
+
+    overflow: 'hidden',
+
+    color: '#ffffff',
+
+    background: `
+      radial-gradient(circle at top left,
+      rgba(124,58,237,0.18),
+      transparent 30%),
+
+      radial-gradient(circle at top right,
+      rgba(255,0,60,0.18),
+      transparent 30%),
+
+      linear-gradient(
+        to bottom,
+        #000000,
+        #050505,
+        #0a0a0a
+      )
+    `,
+  },
+
+  glow1: {
+    position: 'absolute',
+
+    top: -150,
+
+    left: -120,
+
+    width: 400,
+
+    height: 400,
+
+    borderRadius: '50%',
+
+    background:
+      'rgba(124,58,237,0.18)',
+
+    filter: 'blur(120px)',
+  },
+
+  glow2: {
+    position: 'absolute',
+
+    bottom: -150,
+
+    right: -120,
+
+    width: 400,
+
+    height: 400,
+
+    borderRadius: '50%',
+
+    background:
+      'rgba(255,0,60,0.16)',
+
+    filter: 'blur(120px)',
   },
 
   header: {
+    position: 'relative',
+
+    zIndex: 2,
+
+    marginBottom: 35,
+  },
+
+  logoWrap: {
     display: 'flex',
+
     alignItems: 'center',
-    gap: 15,
-    marginBottom: 20,
+
+    gap: 18,
   },
 
   logo: {
-    width: 80,
-    height: 80,
+    width: 90,
+
+    height: 90,
+
     objectFit: 'contain',
+
+    display: 'block',
+
+    filter:
+      'drop-shadow(0 0 25px rgba(255,0,60,0.45))',
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: 'bold',
+    margin: 0,
+
+    fontSize: 40,
+
+    fontWeight: '900',
+
+    color: '#ffffff',
+  },
+
+  subtitle: {
+    marginTop: 6,
+
+    color: '#aaaaaa',
+
+    fontSize: 14,
   },
 
   tabs: {
+    position: 'relative',
+
+    zIndex: 2,
+
     display: 'flex',
-    gap: 10,
-    marginBottom: 20,
+
+    gap: 12,
+
+    flexWrap: 'wrap',
+
+    marginBottom: 28,
   },
 
   tab: {
-    padding: '8px 16px',
-    borderRadius: 10,
+    border: 'none',
+
+    color: '#ffffff',
+
+    padding: '11px 20px',
+
+    borderRadius: 14,
+
     cursor: 'pointer',
+
+    fontWeight: 'bold',
+
+    fontSize: 13,
+
+    backdropFilter: 'blur(10px)',
+
+    transition: '0.2s',
+
+    boxShadow:
+      '0 0 20px rgba(124,58,237,0.12)',
+  },
+
+  empty: {
+    position: 'relative',
+
+    zIndex: 2,
+
+    textAlign: 'center',
+
+    marginTop: 100,
+
+    color: '#888888',
+  },
+
+  emptyLogo: {
+    width: 120,
+
+    marginBottom: 20,
+
+    opacity: 0.95,
+
+    filter:
+      'drop-shadow(0 0 25px rgba(255,0,60,0.4))',
   },
 
   card: {
+    position: 'relative',
+
+    zIndex: 2,
+
     display: 'flex',
+
     gap: 20,
-    background: '#0a0a0a',
-    padding: 15,
-    borderRadius: 12,
-    marginTop: 15,
-    boxShadow:
-      '0 0 20px rgba(255,0,0,0.4), 0 0 20px rgba(124,58,237,0.4)',
+
+    padding: 22,
+
+    marginBottom: 24,
+
+    borderRadius: 22,
+
+    background:
+      'rgba(15,15,15,0.88)',
+
+    border:
+      '1px solid rgba(255,255,255,0.06)',
+
+    boxShadow: `
+      0 0 30px rgba(124,58,237,0.12),
+      0 0 40px rgba(255,0,60,0.10)
+    `,
+
+    backdropFilter:
+      'blur(12px)',
   },
 
   cover: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
+    width: 150,
+
+    height: 150,
+
+    borderRadius: 18,
+
     objectFit: 'cover',
+
+    background: '#111111',
+
+    border:
+      '1px solid rgba(255,255,255,0.08)',
+  },
+
+  songTitle: {
+    margin: 0,
+
+    marginBottom: 8,
+
+    fontSize: 26,
+
+    fontWeight: '800',
+  },
+
+  artist: {
+    margin: 0,
+
+    color: '#aaaaaa',
+
+    fontSize: 15,
   },
 
   playBtn: {
-    marginTop: 10,
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    marginTop: 12,
+
     border: 'none',
-    color: '#fff',
-    padding: '6px 12px',
-    borderRadius: 8,
+
+    color: '#ffffff',
+
     cursor: 'pointer',
+
+    fontWeight: '700',
+
+    borderRadius: 12,
+
+    padding: '10px 18px',
+
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
+
+    boxShadow:
+      '0 0 20px rgba(255,0,60,0.35)',
+  },
+
+  actions: {
+    display: 'flex',
+
+    gap: 12,
+
+    marginTop: 18,
   },
 
   editBtn: {
-    marginTop: 10,
-    background: '#7c3aed',
-    color: '#fff',
     border: 'none',
-    padding: '6px 10px',
-    borderRadius: 6,
+
+    color: '#ffffff',
+
+    cursor: 'pointer',
+
+    fontWeight: 'bold',
+
+    borderRadius: 12,
+
+    padding: '10px 18px',
+
+    background:
+      'linear-gradient(90deg,#7c3aed,#5b21b6)',
   },
 
   deleteBtn: {
-    marginTop: 10,
-    background: 'red',
-    color: '#fff',
     border: 'none',
-    padding: '6px 10px',
-    borderRadius: 6,
+
+    color: '#ffffff',
+
+    cursor: 'pointer',
+
+    fontWeight: 'bold',
+
+    borderRadius: 12,
+
+    padding: '10px 18px',
+
+    background:
+      'linear-gradient(90deg,#ff003c,#dc2626)',
   },
 };
 
+//////////////////////////////////////////////////
+// 🔥 STATUS STYLE
+//////////////////////////////////////////////////
 function getStatusStyle(status) {
-  let bg = '#333';
+  let bg = '#444444';
 
-  if (status === 'pending') bg = '#f59e0b';
-  if (status === 'reviewing') bg = '#3b82f6';
-  if (status === 'approved') bg = '#22c55e';
-  if (status === 'live') bg = '#16a34a';
-  if (status === 'draft') bg = '#555';
+  if (
+    status === 'pending' ||
+    status === 'processing'
+  ) {
+    bg =
+      'linear-gradient(90deg,#f59e0b,#ff8800)';
+  }
+
+  if (status === 'approved') {
+    bg =
+      'linear-gradient(90deg,#22c55e,#16a34a)';
+  }
+
+  if (status === 'live') {
+    bg =
+      'linear-gradient(90deg,#00c853,#00e676)';
+  }
+
+  if (status === 'draft') {
+    bg =
+      'linear-gradient(90deg,#666,#444)';
+  }
 
   return {
-    padding: '4px 10px',
-    borderRadius: 6,
+    display: 'inline-block',
+
+    padding: '8px 14px',
+
+    borderRadius: 999,
+
     background: bg,
-    color: '#fff',
+
+    color: '#ffffff',
+
+    fontWeight: 'bold',
+
     fontSize: 12,
   };
 }

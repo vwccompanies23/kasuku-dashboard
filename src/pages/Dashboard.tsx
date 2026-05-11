@@ -101,12 +101,6 @@ export default function Dashboard() {
         <h1 style={styles.bigAmount}>${data.total.toFixed(2)}</h1>
       </div>
 
-      {/* UPLOAD */}
-      <div style={styles.card}>
-        <h3>📊 Import Earnings Report</h3>
-        <input type="file" onChange={uploadFile} style={styles.fileInput} />
-      </div>
-
       {/* CHART */}
       <div style={styles.card}>
         <h3>📈 {t('monthly')}</h3>
@@ -119,26 +113,10 @@ export default function Dashboard() {
         <SourcesChart data={data.sources} />
       </div>
 
-      {/* RECENT */}
+     {/* RECENT */}
       <div style={styles.card}>
         <h3>📄 {t('recent')}</h3>
         <RecentTable data={data.recent} />
-      </div>
-
-      {/* 🔥 POSTS FEED (FIXED POSITION) */}
-      <div style={{ marginTop: 40 }}>
-        <h3 style={{ marginBottom: 15 }}>📢 Latest Updates</h3>
-
-        {posts.length === 0 && (
-          <p style={{ opacity: 0.6 }}>No updates yet</p>
-        )}
-
-        {posts.map(p => (
-          <div key={p.id} style={styles.post}>
-            {p.image && <img src={p.image} style={styles.image} />}
-            <p>{p.text}</p>
-          </div>
-        ))}
       </div>
 
     </div>

@@ -1,0 +1,32 @@
+export const genres = [
+  'Hip-Hop',
+  'Rap',
+  'Drill',
+  'Afrobeats',
+  'Amapiano',
+  'R&B',
+  'Pop',
+  'Dancehall',
+  'Gospel',
+  'Jazz',
+  'Classical',
+  'Electronic',
+  'Rock',
+  'Alternative',
+  'Soul',
+  'Reggae',
+  'Latin',
+  'Country',
+  'Folk',
+];
+
+export const languages = [
+  'English',
+  'French',
+  'Swahili',
+  'Lingala',
+  'Spanish',
+  'Arabic',
+  'Portuguese',
+  'Instrumental',
+];

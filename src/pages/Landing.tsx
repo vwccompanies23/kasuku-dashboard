@@ -7,6 +7,7 @@ export default function Landing() {
   const [plan, setPlan] = useState('monthly');
   const [posts, setPosts] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [pricing, setPricing] = useState<any>(null);
 
   // ✅ ADDED (FIX CRASH)
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
@@ -34,6 +35,20 @@ export default function Landing() {
   useEffect(() => {
     localStorage.setItem('currency', currency);
   }, [currency]);
+
+  useEffect(() => {
+  const loadPricing = async () => {
+    try {
+      const res = await api.get('/pricing');
+
+      setPricing(res.data);
+    } catch (err) {
+      console.error('Pricing error:', err);
+    }
+  };
+
+  loadPricing();
+}, []);
 
   // ✅ CONVERTER
   const convertPrice = (usd) => {
@@ -192,9 +207,11 @@ export default function Landing() {
             <p style={styles.sub}>Perfect for independent artists</p>
 
             <h2 style={styles.price}>
-              {plan === 'monthly'
-                ? convertPrice(1.75)
-                : convertPrice(20.99)}
+              {convertPrice(
+              plan === 'monthly'
+              ? pricing?.soloMonthly || 1.75
+              : pricing?.soloYearly || 20.99,
+              )}
               <span style={styles.month}>/month</span>
             </h2>
 
@@ -225,9 +242,11 @@ export default function Landing() {
             <p style={styles.sub}>For bands and duos</p>
 
             <h2 style={styles.price}>
-              {plan === 'monthly'
-                ? convertPrice(2.08)
-                : convertPrice(24.99)}
+              {convertPrice(
+             plan === 'monthly'
+            ? pricing?.artistsMonthly || 2.08
+            : pricing?.artistsYearly || 24.99,
+           )}
               <span style={styles.month}>/month</span>
             </h2>
 
@@ -257,9 +276,11 @@ export default function Landing() {
             <p style={styles.sub}>For professionals & labels</p>
 
             <h2 style={styles.price}>
-              {plan === 'monthly'
-                ? convertPrice(5.08)
-                : convertPrice(60.99)}
+              {convertPrice(
+             plan === 'monthly'
+            ? pricing?.proMonthly || 5.08
+            : pricing?.proYearly || 60.99,
+             )}
               <span style={styles.month}>/month</span>
             </h2>
 
@@ -306,13 +327,22 @@ export default function Landing() {
 
       {/* FOOTER */}
       <div style={styles.footer}>
-        <p>©️ 2026 Kasuku</p>
-        <div style={styles.footerLinks}>
-          <span onClick={() => navigate('/terms')} style={styles.link}>Terms</span>
-          <span onClick={() => navigate('/privacy')} style={styles.link}>Privacy</span>
-          <span onClick={() => navigate('/help')} style={styles.link}>Help</span>
-        </div>
-      </div>
+  <p>©️ 2026 Kasuku</p>
+
+  {/* TOP ROW */}
+  <div style={styles.footerLinks}>
+    <span onClick={() => navigate('/terms')} style={styles.link}>Terms</span>
+    <span onClick={() => navigate('/privacy')} style={styles.link}>Privacy</span>
+    <span onClick={() => navigate('/help')} style={styles.link}>Help</span>
+  </div>
+
+  {/* 🔥 SECOND ROW */}
+  <div style={styles.footerBottom}>
+    <span onClick={() => navigate('/about')} style={styles.link}>
+      About Kasuku
+    </span>
+  </div>
+</div>
 
     </div>
   );
@@ -331,6 +361,15 @@ const styles = {
     padding: '20px',
     alignItems: 'center',
   },
+
+  footerBottom: {
+  marginTop: 12,
+  display: 'flex',
+  justifyContent: 'center',
+  opacity: 0.7,
+  fontSize: 13,
+  letterSpacing: 1,
+},
 
   postCard: {
   background: 'rgba(20,20,20,0.9)',

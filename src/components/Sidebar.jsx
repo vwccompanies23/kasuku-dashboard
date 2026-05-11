@@ -5,7 +5,9 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isAdmin = location.pathname.startsWith('/admin'); // ✅ detect admin
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const isAdmin = user?.role === 'admin';
 
   const logout = () => {
     localStorage.removeItem('token');

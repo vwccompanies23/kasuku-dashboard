@@ -13,55 +13,76 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading ] = useState(false);
+  const [loading, setLoading] = useState(false);
 
- const login = async () => {
+  // =========================
+  // 🔐 LOGIN
+  // =========================
+  const login = async () => {
+  if (!email || !password) {
+    alert('Enter email and password');
+    return;
+  }
+
   try {
+    setLoading(true);
+
     console.log('🔐 Logging in...');
 
-    const res = await api.post('/auth/login', {
-      email,
-      password,
-    });
+    const res = await api.post(
+      '/auth/login',
+      {
+        email: email.trim(),
+        password,
+      },
+    );
 
-    console.log('✅ LOGIN RESPONSE:', res.data);
+    console.log(
+      '✅ LOGIN RESPONSE:',
+      res.data,
+    );
 
-    const token =
-      res.data?.access_token ||
-      res.data?.token;
+    //////////////////////////////////////////////////
+    // 🔥 CLEAN EMAIL
+    //////////////////////////////////////////////////
+    const cleanEmail =
+      email.trim().toLowerCase();
 
-    if (!token) {
-      alert('Login failed: No token returned ❌');
-      return;
-    }
+    //////////////////////////////////////////////////
+    // 🔥 SAVE EMAIL
+    //////////////////////////////////////////////////
+    localStorage.setItem(
+      'verifyEmail',
+      cleanEmail,
+    );
 
-    // ✅ SAVE TOKEN
-    localStorage.setItem('token', token);
 
-    console.log('🔥 TOKEN SAVED');
+    //////////////////////////////////////////////////
+    // 🔥 OPTIONAL OTP FLAG
+    //////////////////////////////////////////////////
+    localStorage.setItem(
+      'otp_pending',
+      'true',
+    );
 
-    // ✅ OPTIONAL: SAVE USER INFO
-    if (res.data?.user) {
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-    }
-
-    // ✅ REDIRECT
-    const redirect = localStorage.getItem('redirectAfterLogin');
-
-    if (redirect) {
-      localStorage.removeItem('redirectAfterLogin');
-      navigate(redirect);
-    } else {
-      navigate('/dashboard');
-    }
+    //////////////////////////////////////////////////
+    // 🚀 GO VERIFY
+    //////////////////////////////////////////////////
+    navigate('/verify');
 
   } catch (err) {
-    console.error('❌ LOGIN ERROR:', err);
+    console.error(
+      '❌ LOGIN ERROR:',
+      err,
+    );
 
     alert(
-      err?.response?.data?.message ||
-      'Login failed ❌'
+      err?.response?.data
+        ?.message ||
+        'Login failed ❌',
     );
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -108,7 +129,11 @@ export default function Login() {
             </span>
           </div>
 
-          <button onClick={login} style={styles.loginBtn}>
+          <button
+            onClick={login}
+            style={styles.loginBtn}
+            disabled={loading}
+          >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
@@ -162,7 +187,7 @@ export default function Login() {
 const styles = {
   container: {
     height: '100vh',
-    background: '#050505',
+    background: 'radial-gradient(circle at top, #1a001f, #000)',
     color: '#fff',
     display: 'flex',
     flexDirection: 'column',
@@ -175,22 +200,16 @@ const styles = {
   },
 
   wrapper: {
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center',
-
-  margin: '0 auto',
-  maxWidth: '1300px',
-
-  // 🔥 FIX: spread content instead of squeezing
-  justifyContent: 'space-between',
-
-  // 🔥 FULL WIDTH FEEL
-  width: '100%',
-  padding: '40px 80px',
-
-  gap: 60,
-},
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    margin: '0 auto',
+    maxWidth: '1300px',
+    width: '100%',
+    padding: '40px 80px',
+    gap: 60,
+  },
 
   left: {
     width: 420,
@@ -207,7 +226,6 @@ const styles = {
     justifyContent: 'center',
   },
 
-  /* 🔥 LOGO FIX */
   logo: {
     width: 120,
     alignSelf: 'center',
@@ -219,22 +237,12 @@ const styles = {
     textAlign: 'center',
   },
 
-  /* 🔥 PURPLE GRADIENT TEXT */
   welcome: {
     fontSize: 34,
     background: 'linear-gradient(90deg,#7c3aed,#ff003c)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
-
-  container: {
-  height: '100vh',
-  background: 'radial-gradient(circle at top, #1a001f, #000)',
-  color: '#fff',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'stretch',
-},
 
   subtitle: {
     marginTop: 10,

@@ -51,7 +51,9 @@ return () => {
 
   const loadCounts = async () => {
     try {
-      const res = await api.get('/admin/songs/pending');
+      const res = await api.get(
+  '/releases/admin/pending'
+);
       const data = res.data || [];
 
       const songs = data.filter(

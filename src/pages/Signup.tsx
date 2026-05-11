@@ -28,14 +28,10 @@ export default function Signup() {
       alert('Account created ✅');
 
       // 🔥 GET REDIRECT (IMPORTANT FIX)
-      const redirect = localStorage.getItem('redirectAfterLogin');
+     // ✅ SEND USER TO VERIFY FLOW
+localStorage.setItem('verifyEmail', email.trim().toLowerCase());
 
-      if (redirect) {
-        localStorage.removeItem('redirectAfterLogin');
-        navigate(redirect); // 👉 goes to /payment
-      } else {
-        navigate('/'); // fallback
-      }
+navigate('/verify');
 
     } catch (err) {
       console.log('SIGNUP ERROR:', err);

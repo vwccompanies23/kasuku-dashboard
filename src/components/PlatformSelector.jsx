@@ -1,6 +1,20 @@
 import { useState, useMemo } from 'react';
 
-// ✅ REAL PLATFORMS (WITH REAL DOMAINS)
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+const userPlan =
+  user?.plan === 'pro'
+    ? 3
+    : user?.plan === 'artist'
+    ? 2
+    : 1;
+
+const isAdmin =
+  user?.role === 'admin' ||
+  user?.isFreeOverride === true ||
+  user?.subscriptionActive === true;
+
+// ✅ REAL PLATFORMS ONLY
 const PLATFORMS = [
   { id: 'spotify', name: 'Spotify', domain: 'spotify.com' },
   { id: 'apple', name: 'Apple Music', domain: 'apple.com' },
@@ -27,14 +41,7 @@ const PLATFORMS = [
   { id: 'facebook', name: 'Facebook', domain: 'facebook.com' },
 ];
 
-// 🔥 AUTO-GENERATE MORE REAL-LOOKING (NO BROKEN IMAGES)
-const EXTRA = Array.from({ length: 80 }).map((_, i) => ({
-  id: `label_${i}`,
-  name: `Partner ${i + 1}`,
-  domain: 'music.apple.com', // fallback safe domain
-}));
-
-const ALL = [...PLATFORMS, ...EXTRA];
+const ALL = [...PLATFORMS];
 
 export default function PlatformSelector({
   selectedPlatforms = [],
@@ -47,15 +54,51 @@ export default function PlatformSelector({
   }, [expanded]);
 
   const toggle = (id) => {
+    // 🔒 LOCK RULES
+    const levelMap = {
+      audiomack: 1,
+      boomplay: 1,
+
+      spotify: 2,
+      apple: 2,
+      amazon: 2,
+      deezer: 2,
+
+      youtube: 3,
+      tiktok: 3,
+      instagram: 3,
+      facebook: 3,
+    };
+
+    const requiredLevel = levelMap[id] || 3;
+
+    if (userPlan < requiredLevel && !isAdmin) {
+      alert(
+        'Upgrade your plan to unlock this platform 🚀',
+      );
+      return;
+    }
+
+    // ✅ SELECT / UNSELECT
     if (selectedPlatforms.includes(id)) {
-      setSelectedPlatforms(selectedPlatforms.filter((p) => p !== id));
+      setSelectedPlatforms(
+        selectedPlatforms.filter(
+          (p) => p !== id,
+        ),
+      );
     } else {
-      setSelectedPlatforms([...selectedPlatforms, id]);
+      setSelectedPlatforms([
+        ...selectedPlatforms,
+        id,
+      ]);
     }
   };
 
   const selectAll = () => {
-    setSelectedPlatforms(ALL.map((p) => p.id));
+    setSelectedPlatforms(
+      ALL.map((p) => p.id),
+    );
+
     setExpanded(true);
   };
 
@@ -68,13 +111,22 @@ export default function PlatformSelector({
     <div style={styles.container}>
       {/* HEADER */}
       <div style={styles.header}>
-        <h3 style={styles.title}>Distribution</h3>
+        <h3 style={styles.title}>
+          Distribution
+        </h3>
 
         <div style={styles.actions}>
-          <button onClick={selectAll} style={styles.primary}>
+          <button
+            onClick={selectAll}
+            style={styles.primary}
+          >
             Select All
           </button>
-          <button onClick={clearAll} style={styles.secondary}>
+
+          <button
+            onClick={clearAll}
+            style={styles.secondary}
+          >
             Clear
           </button>
         </div>
@@ -83,21 +135,64 @@ export default function PlatformSelector({
       {/* GRID */}
       <div style={styles.grid}>
         {visible.map((p) => {
-          const active = selectedPlatforms.includes(p.id);
+          const active =
+            selectedPlatforms.includes(
+              p.id,
+            );
+
+          const levelMap = {
+            audiomack: 1,
+            boomplay: 1,
+
+            spotify: 2,
+            apple: 2,
+            amazon: 2,
+            deezer: 2,
+
+            youtube: 3,
+            tiktok: 3,
+            instagram: 3,
+            facebook: 3,
+          };
+
+          const requiredLevel =
+            levelMap[p.id] || 3;
+
+          const locked =
+            userPlan <
+              requiredLevel &&
+            !isAdmin;
 
           return (
             <div
               key={p.id}
-              onClick={() => toggle(p.id)}
+              onClick={() =>
+                toggle(p.id)
+              }
               style={{
                 ...styles.box,
+
                 border: active
                   ? '1px solid #ff004c'
                   : '1px solid #111',
-                background: active ? '#0f0f0f' : 'transparent',
+
+                background: active
+                  ? '#0f0f0f'
+                  : 'transparent',
+
+                // 🔥 LOCK EFFECT
+                opacity: locked
+                  ? 0.5
+                  : 1,
+
+                filter: locked
+                  ? 'blur(1px)'
+                  : 'none',
+
+                position: 'relative',
               }}
             >
-              {/* ✅ LOGO FROM CLEARBIT */}
+              {/* ✅ LOGO */}
               <img
                 src={`https://logo.clearbit.com/${p.domain}`}
                 onError={(e) =>
@@ -107,14 +202,27 @@ export default function PlatformSelector({
                 style={styles.logo}
               />
 
-              <span style={styles.name}>{p.name}</span>
+              <span style={styles.name}>
+                {p.name}
+              </span>
+
+              {locked && (
+                <div style={styles.lock}>
+                  🔒
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
       {!expanded && (
-        <button onClick={() => setExpanded(true)} style={styles.expand}>
+        <button
+          onClick={() =>
+            setExpanded(true)
+          }
+          style={styles.expand}
+        >
           Show All Platforms
         </button>
       )}
@@ -125,75 +233,133 @@ export default function PlatformSelector({
 // ================= STYLES =================
 const styles = {
   container: {
-    background: 'linear-gradient(180deg,#050505,#000)',
+    background:
+      'linear-gradient(180deg,#050505,#000)',
+
     padding: 16,
+
     borderRadius: 14,
+
     border: '1px solid #111',
   },
 
   header: {
     display: 'flex',
-    justifyContent: 'space-between',
+
+    justifyContent:
+      'space-between',
+
     marginBottom: 12,
+  },
+
+  lock: {
+    position: 'absolute',
+
+    top: 6,
+
+    right: 6,
+
+    fontSize: 12,
+
+    background:
+      'rgba(0,0,0,0.7)',
+
+    padding: '2px 6px',
+
+    borderRadius: 6,
+
+    color: '#ff4d6d',
   },
 
   title: {
     color: '#fff',
+
     fontWeight: 600,
   },
 
-  actions: { display: 'flex', gap: 8 },
+  actions: {
+    display: 'flex',
+
+    gap: 8,
+  },
 
   primary: {
     padding: '6px 12px',
-    background: 'linear-gradient(90deg,#ff004c,#7c3aed)',
+
+    background:
+      'linear-gradient(90deg,#ff004c,#7c3aed)',
+
     border: 'none',
+
     color: '#fff',
+
     borderRadius: 8,
   },
 
   secondary: {
     padding: '6px 12px',
+
     background: '#111',
+
     border: '1px solid #222',
+
     color: '#aaa',
+
     borderRadius: 8,
   },
 
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+
+    gridTemplateColumns:
+      'repeat(auto-fill, minmax(120px, 1fr))',
+
     gap: 10,
   },
 
   box: {
     display: 'flex',
+
     alignItems: 'center',
+
     gap: 8,
+
     padding: 10,
+
     borderRadius: 8,
+
     cursor: 'pointer',
+
     transition: '0.2s',
   },
 
   logo: {
     width: 20,
+
     height: 20,
+
     objectFit: 'contain',
   },
 
   name: {
     color: '#fff',
+
     fontSize: 12,
   },
 
   expand: {
     marginTop: 10,
+
     width: '100%',
+
     padding: 10,
+
     background: '#0f0f0f',
+
     border: '1px solid #222',
+
     color: '#888',
+
     borderRadius: 10,
   },
 };
