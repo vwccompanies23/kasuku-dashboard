@@ -4,7 +4,7 @@ import { useLanguage } from '../LanguageContext';
 import youtubeIcon from '../assets/icons/youtube.png';
 import facebookIcon from '../assets/icons/facebook.png';
 import instagramIcon from '../assets/icons/instagram.png';
-import xIcon from '../assets/icons/x.png';
+import xIcon from '../assets/icons/X.png';
 import logo from '../assets/kasuku-logo.png';
 
 export default function About() {
