@@ -9,7 +9,7 @@ export default function ConnectStripe() {
   // 🔍 CHECK STATUS
   // =========================
   useEffect(() => {
-    api.get('/payments/stripe-status')
+    api.get('/payments/stripe/status')
       .then((res) => {
         setConnected(res.data.connected);
       })

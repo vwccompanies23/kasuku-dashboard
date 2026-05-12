@@ -19,20 +19,25 @@ export default function Layout({ children }) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
 
- setUser({
+const savedUser = JSON.parse(
+  localStorage.getItem('user') || '{}'
+);
+
+setUser({
   userId: payload.userId,
   email: payload.email,
-  artistName: payload.artistName,
+  artistName:
+    savedUser.artistName || payload.artistName,
+
+  avatar: savedUser.avatar || '',
+
   role: payload.role,
 
-  // ✅ PLAN
   plan: payload.plan || 1,
 
-  // ✅ SUBSCRIPTION
   subscriptionActive:
     payload.subscriptionActive || false,
 
-  // ✅ ADMIN
   isAdmin: payload.role === 'admin',
 });
 
@@ -141,25 +146,46 @@ export default function Layout({ children }) {
           </div>
         )}
 
-        <div style={styles.bottom}>
-          <div style={styles.user}>
-            👤 {user?.artistName || user?.email || 'User'}
-          </div>
+    <div style={styles.bottom}>
 
-          <div style={styles.plan}>
-  {
-  user?.plan === 'enterprise'
-    ? 'Enterprise Plan 🚀'
-    : user?.plan === 'pro'
-    ? 'Pro Plan 💎'
-    : 'Free Plan'
-}
-          </div>
+  {/* 🔥 PROFILE */}
+  <div style={styles.profileBox}>
 
-          <button style={styles.logout} onClick={logout}>
-            Sign Out
-          </button>
-        </div>
+    {user?.avatar ? (
+      <img
+        src={user.avatar}
+        alt="avatar"
+        style={styles.avatar}
+      />
+    ) : (
+      <div style={styles.emptyAvatar}>
+        👤
+      </div>
+    )}
+
+    <div>
+      <div style={styles.userName}>
+        {user?.artistName || user?.email || 'User'}
+      </div>
+
+      <div style={styles.plan}>
+        {
+          user?.plan === 'enterprise'
+            ? 'Enterprise Plan 🚀'
+            : user?.plan === 'pro'
+            ? 'Pro Plan 💎'
+            : 'Free Plan'
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <button style={styles.logout} onClick={logout}>
+    Sign Out
+  </button>
+
+</div>
       </div>
 
       {/* MAIN */}
@@ -178,6 +204,41 @@ const styles = {
     background: 'radial-gradient(circle at top, #0a0a0a, #000)',
     color: '#fff',
   },
+
+  profileBox: {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  marginBottom: 15,
+},
+
+avatar: {
+  width: 52,
+  height: 52,
+  borderRadius: '50%',
+  objectFit: 'cover',
+  border: '2px solid rgba(124,58,237,0.7)',
+  boxShadow: '0 0 15px rgba(124,58,237,0.4)',
+},
+
+emptyAvatar: {
+  width: 52,
+  height: 52,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg,#1a1a1a,#111)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 24,
+  color: '#888',
+  border: '1px solid #222',
+},
+
+userName: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#fff',
+},
 
   sidebar: {
     width: 230,

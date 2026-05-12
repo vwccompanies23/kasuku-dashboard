@@ -1,6 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../LanguageContext';
+import youtubeIcon from '../assets/icons/Youtube.png';
+import facebookIcon from '../assets/icons/FaceBook.png';
+import instagramIcon from '../assets/icons/Instagram.png';
+import xIcon from '../assets/icons/X.png';
 import logo from '../assets/kasuku-logo.png';
 
 export default function About() {
@@ -102,20 +106,20 @@ export default function About() {
         <h3 style={styles.socialTitle}>{content.follow}</h3>
 
         <div style={styles.socialIcons}>
-          <a href="https://youtube.com/@kasuku" target="_blank">
-            <span style={styles.icon}>▶️</span>
+          <a href="https://www.youtube.com/@Kasukudistributor" target="_blank">
+            <img src={youtubeIcon} style={styles.socialIcon} />
           </a>
 
-          <a href="https://facebook.com/kasuku" target="_blank">
-            <span style={styles.icon}>📘</span>
+          <a href="https://www.facebook.com/profile.php?id=61589769474951" target="_blank">
+            <img src={facebookIcon} style={styles.socialIcon} />
           </a>
 
-          <a href="https://instagram.com/kasuku" target="_blank">
-            <span style={styles.icon}>📸</span>
+          <a href="https://www.instagram.com/kasuku_distributor/" target="_blank">
+            <img src={instagramIcon} style={styles.socialIcon} />
           </a>
 
-          <a href="https://x.com/kasuku" target="_blank">
-            <span style={styles.icon}>✖️</span>
+          <a href="https://x.com/kasuku_platform" target="_blank">
+            <img src={xIcon} style={styles.socialIcon} />
           </a>
         </div>
       </section>
@@ -235,6 +239,12 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
   },
+
+  socialIcon: {
+  width: 32,
+  height: 32,
+  objectFit: 'contain',
+},
 
   hero: {
     textAlign: 'center',

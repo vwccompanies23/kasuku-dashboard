@@ -13,9 +13,14 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   const user = JSON.parse(localStorage.getItem('user'));
-  const limits = PLAN_LIMITS[user?.plan || 'free'];
+  const limits =
+  PLAN_LIMITS[user?.plan?.toLowerCase()] ||
+  PLAN_LIMITS['FREE'] ||
+  {
+    analytics: false,
+  };
 
-if (!limits.analytics) {
+if (!limits?.analytics) {
   return <h2>🚫 Upgrade to access analytics</h2>;
 }
 

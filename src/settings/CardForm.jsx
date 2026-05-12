@@ -1,61 +1,94 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import {
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+
+import { api } from '../api';
 import kasukuLogo from '../assets/kasuku-logo.png';
 
 export default function CardForm() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    number: '',
-    name: '',
-    exp_month: '',
-    exp_year: '',
-    cvc: '',
-  });
+  const stripe = useStripe();
+  const elements = useElements();
 
-  // 🔥 detect card brand
-  const detectBrand = (number) => {
-    const cleaned = number.replace(/\s/g, '');
+  const [loading, setLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState('');
 
-    if (/^4/.test(cleaned)) return 'visa';
-    if (/^5[1-5]/.test(cleaned)) return 'mastercard';
+  const [name, setName] = useState('');
 
-    return 'unknown';
+  useEffect(() => {
+    createSetupIntent();
+  }, []);
+
+  const createSetupIntent = async () => {
+    try {
+      const res = await api.post('/billing/create-setup-intent');
+
+      setClientSecret(res.data.clientSecret);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to initialize Stripe ❌');
+    }
   };
 
-  const brand = detectBrand(form.number);
-
-  // 🔥 format card number
-  const formatCardNumber = (value) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(.{4})/g, '$1 ')
-      .trim();
-  };
-
-  const handleChange = (e) => {
-    let value = e.target.value;
-
-    if (e.target.name === 'number') {
-      value = formatCardNumber(value);
+  // 🔥 SAVE CARD TO STRIPE
+  const saveCard = async () => {
+    if (!stripe || !elements) {
+      return;
     }
 
-    setForm({ ...form, [e.target.name]: value });
-  };
+    try {
+      setLoading(true);
 
-  // ✅ GO TO VERIFY WITH CARD DATA
-  const goToVerify = () => {
-    navigate('/verify', {
-      state: {
-        cardData: form,
-        from: 'card', // 🔥 VERY IMPORTANT
-      },
-    });
+      const cardNumber =
+        elements.getElement(CardNumberElement);
+
+      const result = await stripe.confirmCardSetup(
+        clientSecret,
+        {
+          payment_method: {
+            card: cardNumber,
+            billing_details: {
+              name,
+            },
+          },
+        },
+      );
+
+      if (result.error) {
+        alert(result.error.message);
+        return;
+      }
+
+      await api.post('/billing/save-card', {
+        paymentMethodId:
+          result.setupIntent.payment_method,
+      });
+
+      alert('Card saved successfully 💳');
+
+      navigate('/settings/card');
+    } catch (err) {
+      console.error(err);
+
+      alert('Failed to save card ❌');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>💳 Add / Update Card</h1>
+      <h1 style={styles.title}>
+        💳 Add / Update Card
+      </h1>
 
       {/* CARD PREVIEW */}
       <div style={styles.preview}>
@@ -65,33 +98,40 @@ export default function CardForm() {
           <div style={styles.top}>
             <div style={styles.chip}></div>
 
-            {/* BRAND */}
             <div style={styles.brand}>
-              {brand === 'visa' && 'VISA'}
-              {brand === 'mastercard' && 'MC'}
+              STRIPE
             </div>
           </div>
 
-          {/* 🔥 LOGO TOP RIGHT */}
-          <img src={kasukuLogo} style={styles.logo} />
+          {/* LOGO */}
+          <img
+            src={kasukuLogo}
+            style={styles.logo}
+          />
 
           {/* NUMBER */}
           <div style={styles.number}>
-            {form.number || '**** **** **** ****'}
+            **** **** **** ****
           </div>
 
           {/* BOTTOM */}
           <div style={styles.bottom}>
             <div>
-              <p style={styles.label}>CARD HOLDER</p>
-              <p>{form.name || 'YOUR NAME'}</p>
+              <p style={styles.label}>
+                CARD HOLDER
+              </p>
+
+              <p>
+                {name || 'YOUR NAME'}
+              </p>
             </div>
 
             <div>
-              <p style={styles.label}>EXPIRES</p>
-              <p>
-                {form.exp_month || 'MM'}/{form.exp_year || 'YY'}
+              <p style={styles.label}>
+                SECURE
               </p>
+
+              <p>STRIPE</p>
             </div>
           </div>
         </div>
@@ -99,50 +139,78 @@ export default function CardForm() {
 
       {/* FORM */}
       <div style={styles.form}>
-        <input
-          name="number"
-          placeholder="Card Number"
-          value={form.number}
-          onChange={handleChange}
-          style={styles.input}
-        />
 
+        {/* CARD HOLDER */}
         <input
-          name="name"
           placeholder="Card Holder Name"
-          value={form.name}
-          onChange={handleChange}
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
           style={styles.input}
         />
 
-        <div style={styles.row}>
-          <input
-            name="exp_month"
-            placeholder="MM"
-            value={form.exp_month}
-            onChange={handleChange}
-            style={styles.input}
-          />
-
-          <input
-            name="exp_year"
-            placeholder="YY"
-            value={form.exp_year}
-            onChange={handleChange}
-            style={styles.input}
-          />
-
-          <input
-            name="cvc"
-            placeholder="CVC"
-            value={form.cvc}
-            onChange={handleChange}
-            style={styles.input}
+        {/* CARD NUMBER */}
+        <div style={styles.stripeInput}>
+          <CardNumberElement
+            options={{
+              style: {
+                base: {
+                  color: '#fff',
+                  fontSize: '16px',
+                  '::placeholder': {
+                    color: '#888',
+                  },
+                },
+              },
+            }}
           />
         </div>
 
-        <button onClick={goToVerify} style={styles.button}>
-          Verify & Save 💳
+        {/* ROW */}
+        <div style={styles.row}>
+          <div style={styles.stripeInput}>
+            <CardExpiryElement
+              options={{
+                style: {
+                  base: {
+                    color: '#fff',
+                    fontSize: '16px',
+                    '::placeholder': {
+                      color: '#888',
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+
+          <div style={styles.stripeInput}>
+            <CardCvcElement
+              options={{
+                style: {
+                  base: {
+                    color: '#fff',
+                    fontSize: '16px',
+                    '::placeholder': {
+                      color: '#888',
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+
+        {/* SAVE BUTTON */}
+        <button
+          onClick={saveCard}
+          disabled={loading}
+          style={styles.button}
+        >
+          {loading
+            ? 'Saving Card...'
+            : 'Verify & Save 💳'}
         </button>
       </div>
     </div>
@@ -173,8 +241,10 @@ const styles = {
     height: 200,
     borderRadius: 20,
     padding: 20,
-    background: 'linear-gradient(135deg,#ff003c,#7c3aed)',
-    boxShadow: '0 0 40px rgba(124,58,237,0.6)',
+    background:
+      'linear-gradient(135deg,#ff003c,#7c3aed)',
+    boxShadow:
+      '0 0 40px rgba(124,58,237,0.6)',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -198,7 +268,6 @@ const styles = {
     fontSize: 14,
   },
 
-  // ✅ LOGO FIXED POSITION
   logo: {
     position: 'absolute',
     top: 15,
@@ -230,9 +299,18 @@ const styles = {
   input: {
     padding: 12,
     borderRadius: 10,
-    border: '1px solid rgba(255,255,255,0.1)',
+    border:
+      '1px solid rgba(255,255,255,0.1)',
     background: '#111',
     color: '#fff',
+  },
+
+  stripeInput: {
+    padding: 16,
+    borderRadius: 10,
+    border:
+      '1px solid rgba(255,255,255,0.1)',
+    background: '#111',
   },
 
   row: {
@@ -244,9 +322,11 @@ const styles = {
     padding: 14,
     borderRadius: 12,
     border: 'none',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     color: '#fff',
     fontWeight: 'bold',
     cursor: 'pointer',
+    opacity: 1,
   },
 };

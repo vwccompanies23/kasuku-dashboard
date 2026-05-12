@@ -41,7 +41,7 @@ export default function Profile() {
 
     // 🔥 REFERRAL
     referralCode: '',
-    referralDisabled: false,
+    referralEnabled: true,
   });
 
   const [suggestions, setSuggestions] = useState([]);
@@ -60,6 +60,19 @@ export default function Profile() {
     try {
       const res = await api.get('/users/me');
       setUser(res.data);
+
+// 🔥 UPDATE LOCAL STORAGE
+localStorage.setItem(
+  'user',
+  JSON.stringify({
+    ...JSON.parse(localStorage.getItem('user') || '{}'),
+    ...res.data,
+    image: res.data.avatar,
+    username:
+      res.data.artistName ||
+      res.data.username,
+  })
+);
 
       if (res.data?.referralCode) {
         setRefLink(
@@ -84,6 +97,19 @@ export default function Profile() {
     const timeout = setTimeout(async () => {
       try {
         await api.post('/users/update', user);
+
+// 🔥 SAVE TO LOCAL STORAGE
+localStorage.setItem(
+  'user',
+  JSON.stringify({
+    ...JSON.parse(localStorage.getItem('user') || '{}'),
+    ...user,
+    image: user.avatar,
+    username:
+      user.artistName ||
+      user.username,
+  })
+);
       } catch {}
       setSaving(false);
     }, 1200);
@@ -135,10 +161,27 @@ export default function Profile() {
 
     try {
       const res = await api.post('/users/upload-avatar', formData);
-      setUser((prev) => ({
-        ...prev,
-        avatar: res.data.url,
-      }));
+      setUser((prev) => {
+  const updated = {
+    ...prev,
+    avatar: res.data.url,
+  };
+
+  // 🔥 UPDATE LOCAL STORAGE
+  localStorage.setItem(
+    'user',
+    JSON.stringify({
+      ...JSON.parse(localStorage.getItem('user') || '{}'),
+      ...updated,
+      image: updated.avatar,
+      username:
+        updated.artistName ||
+        updated.username,
+    })
+  );
+
+  return updated;
+});
     } catch {
       alert('Upload failed ❌');
     }
@@ -181,7 +224,7 @@ export default function Profile() {
       </div>
 
       {/* 🔥 TOP RIGHT REFERRAL (ADDED ONLY) */}
-      {!user.referralDisabled && (
+      {!user.referralEnabled && (
         <div style={styles.refBox}>
           <div style={{ fontWeight: 'bold' }}>🎁 Refer & Earn</div>
 

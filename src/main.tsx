@@ -4,11 +4,17 @@ import App from './App'
 import { LanguageProvider } from './LanguageContext';
 
 import { Toaster } from 'react-hot-toast';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 
 import './index.css'
 import './App.css';
 import './i18n.js';
 import './toast.css';
+
+export const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLIC_KEY
+);
 
 // ===============================
 // 🔥 AUTO LOGOUT (1 HOUR)
@@ -126,63 +132,69 @@ window.onerror = function (msg) {
 // ===============================
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <LanguageProvider>
 
-      <App />
+    <Elements stripe={stripePromise}>
 
-      {/* 🔥 GLOBAL KASUKU TOASTS */}
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        gutter={15}
-        containerStyle={{
-          top: 20,
-          right: 20,
-        }}
-        toastOptions={{
-          duration: 5000,
+      <LanguageProvider>
 
-          className: 'kasuku-toast',
+        <App />
 
-          style: {
-            background:
-              'linear-gradient(135deg,#050505,#17001f)',
+        {/* 🔥 GLOBAL KASUKU TOASTS */}
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          gutter={15}
+          containerStyle={{
+            top: 20,
+            right: 20,
+          }}
+          toastOptions={{
+            duration: 5000,
 
-            color: '#ffffff',
+            className: 'kasuku-toast',
 
-            border:
-              '1px solid rgba(124,58,237,0.5)',
+            style: {
+              background:
+                'linear-gradient(135deg,#050505,#17001f)',
 
-            borderRadius: '22px',
+              color: '#ffffff',
 
-            padding: '18px',
+              border:
+                '1px solid rgba(124,58,237,0.5)',
 
-            boxShadow:
-              '0 0 35px rgba(124,58,237,0.45)',
+              borderRadius: '22px',
 
-            backdropFilter: 'blur(12px)',
+              padding: '18px',
 
-            fontWeight: '600',
+              boxShadow:
+                '0 0 35px rgba(124,58,237,0.45)',
 
-            minWidth: '350px',
-          },
+              backdropFilter: 'blur(12px)',
 
-          success: {
-            iconTheme: {
-              primary: '#ff004c',
-              secondary: '#ffffff',
+              fontWeight: '600',
+
+              minWidth: '350px',
             },
-          },
 
-          error: {
-            iconTheme: {
-              primary: '#ff004c',
-              secondary: '#ffffff',
+            success: {
+              iconTheme: {
+                primary: '#ff004c',
+                secondary: '#ffffff',
+              },
             },
-          },
-        }}
-      />
 
-    </LanguageProvider>
+            error: {
+              iconTheme: {
+                primary: '#ff004c',
+                secondary: '#ffffff',
+              },
+            },
+          }}
+        />
+
+      </LanguageProvider>
+
+    </Elements>
+
   </React.StrictMode>,
-)
+);
