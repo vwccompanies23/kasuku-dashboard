@@ -8,7 +8,9 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null);
 
   // ✅ GET USER FROM TOKEN
-  useEffect(() => {
+ useEffect(() => {
+
+  const loadUser = () => {
     const token = localStorage.getItem('token');
 
     if (!token) {
@@ -17,37 +19,76 @@ export default function Layout({ children }) {
     }
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
 
-const savedUser = JSON.parse(
-  localStorage.getItem('user') || '{}'
-);
+      const payload = JSON.parse(
+        atob(token.split('.')[1])
+      );
 
-setUser({
-  userId: payload.userId,
-  email: payload.email,
-  artistName:
-    savedUser.artistName || payload.artistName,
+      const savedUser = JSON.parse(
+        localStorage.getItem('user') || '{}'
+      );
 
-  avatar: savedUser.avatar || '',
+      setUser({
+        userId: payload.userId,
 
-  role: payload.role,
+        email:
+          savedUser.email ||
+          payload.email,
 
-  plan: payload.plan || 1,
+        artistName:
+          savedUser.artistName ||
+          payload.artistName,
 
-  subscriptionActive:
-    payload.subscriptionActive || false,
+        avatar:
+          savedUser.avatar ||
+          savedUser.image ||
+          '',
 
-  isAdmin: payload.role === 'admin',
-});
+        role: payload.role,
+
+        plan:
+          savedUser.plan ||
+          payload.plan ||
+          1,
+
+        subscriptionActive:
+          savedUser.subscriptionActive ??
+          payload.subscriptionActive ??
+          false,
+
+        isAdmin:
+          payload.role === 'admin',
+      });
 
     } catch (err) {
-      console.log('Invalid token → clearing');
+
+      console.log(
+        'Invalid token → clearing'
+      );
 
       localStorage.removeItem('token');
+
       setUser(null);
     }
-  }, []);
+  };
+
+  // 🔥 INITIAL LOAD
+  loadUser();
+
+  // 🔥 LIVE SYNC
+  window.addEventListener(
+    'storage',
+    loadUser
+  );
+
+  return () => {
+    window.removeEventListener(
+      'storage',
+      loadUser
+    );
+  };
+
+}, []);
 
   // 🔥 AUTO LOGOUT (30 MINUTES)
   useEffect(() => {

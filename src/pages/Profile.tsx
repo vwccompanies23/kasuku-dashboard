@@ -3,26 +3,10 @@ import { api } from '../api';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/kasuku-logo.png';
 
-// 🔥 MOCK ARTISTS
-const mockArtists = [
-  {
-    name: 'Drake',
-    spotifyArtistId: 'sp_drake_123',
-    appleMusicId: 'am_drake_456',
-    youtubeChannelId: 'yt_drake_789',
-  },
-  {
-    name: 'Hera',
-    spotifyArtistId: 'sp_hera_999',
-    appleMusicId: 'am_hera_888',
-    youtubeChannelId: 'yt_hera_777',
-  },
-];
-
 export default function Profile() {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState({
+  const [user, setUser] = useState<any>({
     artistName: '',
     email: '',
     bio: '',
@@ -31,55 +15,73 @@ export default function Profile() {
     instagram: '',
     twitter: '',
     youtube: '',
+
     spotifyArtistId: '',
     appleMusicId: '',
     amazonMusicId: '',
     youtubeChannelId: '',
     tidalId: '',
     deezerId: '',
-    platformIdsVerified: false,
 
-    // 🔥 REFERRAL
     referralCode: '',
     referralEnabled: true,
+
+    plan: '',
+    subscriptionActive: false,
   });
 
-  const [suggestions, setSuggestions] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 🔥 REF LINK
-  const [refLink, setRefLink] = useState('');
+  // 🔥 LIVE SEARCH
+  const [artistSearch, setArtistSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searching, setSearching] = useState(false);
 
-  const locked = user.platformIdsVerified;
+  // 🔥 REFERRAL
+  const [refLink, setRefLink] = useState('');
 
   // =====================
   // LOAD PROFILE
   // =====================
   const loadProfile = async () => {
     try {
+
       const res = await api.get('/users/me');
+
       setUser(res.data);
 
-// 🔥 UPDATE LOCAL STORAGE
-localStorage.setItem(
-  'user',
-  JSON.stringify({
-    ...JSON.parse(localStorage.getItem('user') || '{}'),
-    ...res.data,
-    image: res.data.avatar,
-    username:
-      res.data.artistName ||
-      res.data.username,
-  })
-);
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          ...JSON.parse(
+            localStorage.getItem('user') || '{}'
+          ),
+
+          ...res.data,
+
+          avatar: res.data.avatar,
+          image: res.data.avatar,
+
+          username:
+            res.data.artistName ||
+            res.data.username,
+        })
+      );
+
+      window.dispatchEvent(
+        new Event('storage')
+      );
 
       if (res.data?.referralCode) {
+
         setRefLink(
           `${window.location.origin}/auth?ref=${res.data.referralCode}`
         );
       }
+
     } catch (err) {
+
       console.error(err);
     }
   };
@@ -92,250 +94,579 @@ localStorage.setItem(
   // AUTO SAVE
   // =====================
   useEffect(() => {
+
     if (!user.email) return;
 
     const timeout = setTimeout(async () => {
-      try {
-        await api.post('/users/update', user);
 
-// 🔥 SAVE TO LOCAL STORAGE
-localStorage.setItem(
-  'user',
-  JSON.stringify({
-    ...JSON.parse(localStorage.getItem('user') || '{}'),
-    ...user,
-    image: user.avatar,
-    username:
-      user.artistName ||
-      user.username,
-  })
-);
-      } catch {}
-      setSaving(false);
+      try {
+
+        setSaving(true);
+
+        await api.post(
+          '/users/update',
+          user
+        );
+
+        localStorage.setItem(
+          'user',
+          JSON.stringify({
+            ...JSON.parse(
+              localStorage.getItem('user') || '{}'
+            ),
+
+            ...user,
+
+            avatar: user.avatar,
+            image: user.avatar,
+
+            username:
+              user.artistName ||
+              user.username,
+          })
+        );
+
+        window.dispatchEvent(
+          new Event('storage')
+        );
+
+      } catch (err) {
+
+        console.error(err);
+
+      } finally {
+
+        setSaving(false);
+      }
+
     }, 1200);
 
     return () => clearTimeout(timeout);
+
   }, [user]);
 
   // =====================
-  // ARTIST SEARCH
+  // 🔥 LIVE SPOTIFY SEARCH
   // =====================
-  const handleArtistChange = (value) => {
-    if (locked) return;
+  useEffect(() => {
 
-    setUser({ ...user, artistName: value });
+    const searchArtists = async () => {
 
-    const results = mockArtists.filter((a) =>
-      a.name.toLowerCase().includes(value.toLowerCase())
-    );
+      if (!artistSearch.trim()) {
 
-    setSuggestions(results);
-    setShowDropdown(true);
-  };
+        setSearchResults([]);
+        setShowSearch(false);
 
-  const selectArtist = async (artist) => {
-    const updatedUser = {
-      ...user,
-      artistName: artist.name,
-      spotifyArtistId: artist.spotifyArtistId || '',
-      appleMusicId: artist.appleMusicId || '',
-      youtubeChannelId: artist.youtubeChannelId || '',
-      platformIdsVerified: true,
+        return;
+      }
+
+      try {
+
+        setSearching(true);
+
+        const res = await api.get(
+          `/spotify/search?name=${encodeURIComponent(
+            artistSearch
+          )}`
+        );
+
+        setSearchResults(
+          res.data || []
+        );
+
+        setShowSearch(true);
+
+      } catch (err) {
+
+        console.error(err);
+
+        setSearchResults([]);
+        setShowSearch(false);
+
+      } finally {
+
+        setSearching(false);
+      }
     };
 
-    setUser(updatedUser);
-    setShowDropdown(false);
+    const timeout = setTimeout(() => {
+      searchArtists();
+    }, 400);
 
-    await api.post('/users/update', updatedUser);
-  };
+    return () => clearTimeout(timeout);
+
+  }, [artistSearch]);
 
   // =====================
   // AVATAR
   // =====================
-  const uploadAvatar = async (e) => {
+  const uploadAvatar = async (e: any) => {
+
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     const formData = new FormData();
+
     formData.append('file', file);
 
     try {
-      const res = await api.post('/users/upload-avatar', formData);
-      setUser((prev) => {
-  const updated = {
-    ...prev,
-    avatar: res.data.url,
-  };
 
-  // 🔥 UPDATE LOCAL STORAGE
-  localStorage.setItem(
-    'user',
-    JSON.stringify({
-      ...JSON.parse(localStorage.getItem('user') || '{}'),
-      ...updated,
-      image: updated.avatar,
-      username:
-        updated.artistName ||
-        updated.username,
-    })
-  );
+      const res = await api.post(
+        '/users/upload-avatar',
+        formData
+      );
 
-  return updated;
-});
+      const updated = {
+        ...user,
+        avatar: res.data.url,
+      };
+
+      // 🔥 UPDATE UI INSTANTLY
+      setUser(updated);
+
+      // 🔥 UPDATE STORAGE
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          ...JSON.parse(
+            localStorage.getItem('user') || '{}'
+          ),
+
+          ...updated,
+
+          avatar: updated.avatar,
+          image: updated.avatar,
+
+          username:
+            updated.artistName ||
+            updated.username,
+        })
+      );
+
+      // 🔥 FORCE SIDEBAR UPDATE
+      window.dispatchEvent(
+        new Event('storage')
+      );
+
     } catch {
+
       alert('Upload failed ❌');
     }
   };
 
   // =====================
-  // 🔗 SHARE
+  // SELECT PROFILE
+  // =====================
+  const selectArtistProfile = (
+    artist: any
+  ) => {
+
+    const updatedUser = {
+
+      ...user,
+
+      artistName:
+        artist.name || '',
+
+      spotifyArtistId:
+        artist.spotifyId || '',
+
+      spotifyUrl:
+        artist.spotifyId
+          ? `https://open.spotify.com/artist/${artist.spotifyId}`
+          : '',
+    };
+
+    setUser(updatedUser);
+
+    setArtistSearch(
+      artist.name
+    );
+
+    setShowSearch(false);
+
+    // 🔥 SAVE IMMEDIATELY
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        ...JSON.parse(
+          localStorage.getItem('user') || '{}'
+        ),
+
+        ...updatedUser,
+
+        avatar: updatedUser.avatar,
+        image: updatedUser.avatar,
+
+        username:
+          updatedUser.artistName,
+      })
+    );
+
+    window.dispatchEvent(
+      new Event('storage')
+    );
+  };
+
+  // =====================
+  // SHARE REF LINK
   // =====================
   const handleShare = async () => {
+
     if (!refLink) return;
 
     if (navigator.share) {
+
       await navigator.share({
         title: 'Join Kasuku',
-        text: 'Get FREE 1 year subscription 🎧',
+
+        text:
+          'Get FREE 1 year subscription 🎧',
+
         url: refLink,
       });
+
     } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(refLink)}`);
+
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(
+          refLink
+        )}`
+      );
     }
   };
 
   // =====================
-  // 📋 COPY
+  // COPY REF LINK
   // =====================
   const handleCopy = async () => {
+
     if (!refLink) return;
 
-    await navigator.clipboard.writeText(refLink);
+    await navigator.clipboard.writeText(
+      refLink
+    );
+
     alert('Link copied 🔥');
   };
 
   return (
     <div style={styles.page}>
-      
+
       {/* HEADER */}
       <div style={styles.header}>
-        <img src={logo} style={styles.logo} />
-        <h1 style={styles.title}>Profile Settings</h1>
+
+        <img
+          src={logo}
+          style={styles.logo}
+        />
+
+        <h1 style={styles.title}>
+          Profile Settings
+        </h1>
+
       </div>
 
-      {/* 🔥 TOP RIGHT REFERRAL (ADDED ONLY) */}
-      {!user.referralEnabled && (
-        <div style={styles.refBox}>
-          <div style={{ fontWeight: 'bold' }}>🎁 Refer & Earn</div>
+      {/* REFERRAL */}
+      {user.referralEnabled && (
 
-          <div style={{ fontSize: 12, color: '#aaa' }}>
+        <div style={styles.refBox}>
+
+          <div style={{ fontWeight: 'bold' }}>
+            🎁 Refer & Earn
+          </div>
+
+          <div
+            style={{
+              fontSize: 12,
+              color: '#aaa',
+            }}
+          >
             FREE 1 year subscription
           </div>
 
           <input
-            value={refLink || 'Generating...'}
+            value={
+              refLink || 'Generating...'
+            }
             readOnly
             style={styles.refInput}
           />
 
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button style={styles.smallBtn} onClick={handleShare}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+            }}
+          >
+
+            <button
+              style={styles.smallBtn}
+              onClick={handleShare}
+            >
               Share
             </button>
 
-            <button style={styles.smallBtnOutline} onClick={handleCopy}>
+            <button
+              style={styles.smallBtnOutline}
+              onClick={handleCopy}
+            >
               Copy
             </button>
+
           </div>
+
         </div>
       )}
 
       <div style={styles.container}>
 
-        {/* ===================== */}
-        {/* ARTIST PROFILE */}
-        {/* ===================== */}
+        {/* PROFILE */}
         <div style={styles.card}>
+
           <h2>Artist Profile</h2>
 
+          {/* PLAN */}
+          <div style={styles.planBox}>
+
+            <div>
+
+              <div style={styles.planLabel}>
+                Subscription
+              </div>
+
+              <div style={styles.planValue}>
+                {user.plan
+                  ? user.plan.toUpperCase()
+                  : 'FREE'}
+              </div>
+
+            </div>
+
+            <div
+              style={{
+                ...styles.statusBadge,
+
+                background:
+                  user.subscriptionActive
+                    ? 'rgba(0,255,120,0.15)'
+                    : 'rgba(255,0,60,0.15)',
+
+                color:
+                  user.subscriptionActive
+                    ? '#00ff99'
+                    : '#ff4d6d',
+              }}
+            >
+              {user.subscriptionActive
+                ? 'ACTIVE'
+                : 'INACTIVE'}
+            </div>
+
+          </div>
+
+          {/* AVATAR */}
           <div style={styles.avatarBox}>
+
             <img
-              src={user.avatar || 'https://via.placeholder.com/100'}
+              src={
+                user.avatar ||
+                'https://via.placeholder.com/100'
+              }
               style={styles.avatar}
             />
 
             <label style={styles.uploadBtn}>
+
               Upload Image
+
               <input
                 type="file"
                 onChange={uploadAvatar}
-                style={{ display: 'none' }}
+                style={{
+                  display: 'none',
+                }}
               />
+
             </label>
+
           </div>
 
           <input
             style={styles.input}
             value={user.artistName || ''}
-            onChange={(e) => handleArtistChange(e.target.value)}
             placeholder="Artist Name"
+            onChange={(e) =>
+              setUser({
+                ...user,
+                artistName:
+                  e.target.value,
+              })
+            }
           />
 
-          {/* 🔥 DROPDOWN */}
-          {showDropdown && suggestions.length > 0 && (
-            <div style={styles.dropdown}>
-              {suggestions.map((a, i) => (
-                <div
-                  key={i}
-                  style={styles.dropdownItem}
-                  onClick={() => selectArtist(a)}
-                >
-                  {a.name}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <input style={styles.input} value={user.email || ''} disabled />
+          <input
+            style={styles.input}
+            value={user.email || ''}
+            disabled
+          />
 
           <textarea
-            style={styles.input}
+            style={{
+              ...styles.input,
+              minHeight: 120,
+            }}
+            placeholder="Artist Bio"
             value={user.bio || ''}
-            placeholder="Bio"
             onChange={(e) =>
-              setUser({ ...user, bio: e.target.value })
+              setUser({
+                ...user,
+                bio: e.target.value,
+              })
             }
           />
 
           <p style={{ color: '#888' }}>
-            {saving ? 'Saving...' : 'Auto-saved'}
+            {saving
+              ? 'Saving...'
+              : 'Auto-saved'}
           </p>
+
         </div>
 
-        {/* ===================== */}
-        {/* SOCIAL LINKS */}
-        {/* ===================== */}
+        {/* SOCIALS */}
         <div style={styles.card}>
+
           <h2>Social Links</h2>
 
-          {['website', 'instagram', 'twitter', 'youtube'].map((field) => (
+          {[
+            'website',
+            'instagram',
+            'twitter',
+            'youtube',
+          ].map((field) => (
+
             <input
               key={field}
               style={styles.input}
               placeholder={field}
               value={user[field] || ''}
               onChange={(e) =>
-                setUser({ ...user, [field]: e.target.value })
+                setUser({
+                  ...user,
+                  [field]:
+                    e.target.value,
+                })
               }
             />
+
           ))}
+
         </div>
 
-        {/* ===================== */}
         {/* PLATFORM IDS */}
-        {/* ===================== */}
         <div style={styles.card}>
-          <h2>Platform Artist IDs</h2>
+
+          <h2>
+            Platform Artist IDs
+          </h2>
+
+          {/* 🔥 LIVE SEARCH */}
+          <input
+            style={styles.input}
+            placeholder="Search Spotify artist..."
+            value={artistSearch}
+            onChange={(e) =>
+              setArtistSearch(
+                e.target.value
+              )
+            }
+          />
+
+          {/* RESULTS */}
+          {showSearch && (
+
+            <div style={styles.searchResults}>
+
+              {searching ? (
+
+                <div style={styles.noResults}>
+                  Searching...
+                </div>
+
+              ) : searchResults.length > 0 ? (
+
+                searchResults.map(
+                  (artist, index) => (
+
+                    <div
+                      key={index}
+                      style={styles.resultCard}
+                      onClick={() =>
+                        selectArtistProfile(
+                          artist
+                        )
+                      }
+                    >
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                        }}
+                      >
+
+                        <img
+                          src={
+                            artist.image ||
+                            'https://via.placeholder.com/50'
+                          }
+                          style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                          }}
+                        />
+
+                        <div>
+
+                          <div
+                            style={{
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            {artist.name}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: '#888',
+                            }}
+                          >
+                            Spotify Artist
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+                  )
+                )
+
+              ) : (
+
+                <div style={styles.noResults}>
+                  No profile found
+                </div>
+              )}
+
+            </div>
+          )}
 
           {[
             'spotifyArtistId',
@@ -345,29 +676,41 @@ localStorage.setItem(
             'tidalId',
             'deezerId',
           ].map((field) => (
+
             <input
               key={field}
               style={styles.input}
               placeholder={field}
               value={user[field] || ''}
               onChange={(e) =>
-                setUser({ ...user, [field]: e.target.value })
+                setUser({
+                  ...user,
+                  [field]:
+                    e.target.value,
+                })
               }
             />
+
           ))}
+
         </div>
 
-        {/* ===================== */}
         {/* COLLAB */}
-        {/* ===================== */}
         <div style={styles.cardGlow}>
+
           <h2>Collaborations</h2>
+
           <button
             style={styles.mainBtn}
-            onClick={() => navigate('/collaborators')}
+            onClick={() =>
+              navigate(
+                '/collaborators'
+              )
+            }
           >
             Open Collaborator Dashboard
           </button>
+
         </div>
 
       </div>
@@ -376,100 +719,164 @@ localStorage.setItem(
 }
 
 // 🎨 STYLES
-const styles = {
-  page: { minHeight: '100vh', background: '#0a0a0a', color: '#fff', position: 'relative' },
+const styles: any = {
+  page: {
+    minHeight: '100vh',
+    background:
+      'radial-gradient(circle at top, #1a002b, #020617, #000)',
+    color: '#fff',
+    position: 'relative',
+  },
 
   header: {
     display: 'flex',
     alignItems: 'center',
     padding: 20,
-    borderBottom: '1px solid #111',
+    borderBottom:
+      '1px solid rgba(255,255,255,0.06)',
   },
 
-  logo: { width: 45, marginRight: 10 },
+  logo: {
+    width: 50,
+    marginRight: 10,
+  },
 
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    WebkitTextFillColor:
+      'transparent',
   },
 
-  container: { maxWidth: 700, margin: '40px auto' },
+  container: {
+    maxWidth: 750,
+    margin: '40px auto',
+    padding: 20,
+  },
 
   card: {
-    background: '#111',
-    padding: 20,
-    borderRadius: 14,
+    background:
+      'rgba(15,15,15,0.9)',
+    padding: 22,
+    borderRadius: 18,
     marginBottom: 20,
+    border:
+      '1px solid rgba(255,255,255,0.06)',
+    backdropFilter: 'blur(20px)',
   },
 
   cardGlow: {
-    background: 'linear-gradient(135deg,#141414,#1f0033)',
-    padding: 20,
-    borderRadius: 16,
+    background:
+      'linear-gradient(135deg,#141414,#1f0033)',
+    padding: 22,
+    borderRadius: 18,
     marginBottom: 20,
-    boxShadow: '0 0 20px rgba(124,58,237,0.4)',
+    boxShadow:
+      '0 0 40px rgba(124,58,237,0.35)',
   },
 
   input: {
     width: '100%',
-    padding: 12,
-    marginBottom: 10,
+    padding: 14,
+    marginBottom: 12,
+    borderRadius: 12,
     background: '#0f0f0f',
-    border: '1px solid #222',
+    border:
+      '1px solid rgba(255,255,255,0.08)',
     color: '#fff',
+    outline: 'none',
   },
 
-  avatar: { width: 100, height: 100, borderRadius: '50%' },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border:
+      '3px solid rgba(124,58,237,0.5)',
+  },
 
   avatarBox: {
-    marginBottom: 15,
+    marginBottom: 20,
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
+    gap: 16,
   },
 
   uploadBtn: {
-    padding: '10px 14px',
-    borderRadius: 8,
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    padding: '10px 16px',
+    borderRadius: 10,
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     cursor: 'pointer',
-    fontSize: 12,
-  },
-
-  dropdown: {
-    background: '#000',
-    border: '1px solid #222',
-    marginBottom: 10,
-  },
-
-  dropdownItem: {
-    padding: 10,
-    cursor: 'pointer',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 
   mainBtn: {
     width: '100%',
-    padding: 14,
-    borderRadius: 10,
+    padding: 15,
+    borderRadius: 12,
     border: 'none',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     color: '#fff',
     fontWeight: 'bold',
+    cursor: 'pointer',
+    fontSize: 15,
   },
 
-  // 🔥 REFERRAL
+  planBox: {
+    marginTop: 15,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 14,
+    background:
+      'linear-gradient(135deg, rgba(255,0,60,0.12), rgba(124,58,237,0.12))',
+    border:
+      '1px solid rgba(255,255,255,0.08)',
+    display: 'flex',
+    justifyContent:
+      'space-between',
+    alignItems: 'center',
+  },
+
+  planLabel: {
+    fontSize: 12,
+    color: '#aaa',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+
+  planValue: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+
+  statusBadge: {
+    padding: '8px 14px',
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+
   refBox: {
     position: 'absolute',
     top: 20,
     right: 20,
     width: 240,
-    background: 'linear-gradient(135deg,#140014,#1f0033)',
+    background:
+      'linear-gradient(135deg,#140014,#1f0033)',
     padding: 12,
-    borderRadius: 12,
-    boxShadow: '0 0 20px rgba(124,58,237,0.4)',
+    borderRadius: 14,
+    boxShadow:
+      '0 0 25px rgba(124,58,237,0.35)',
   },
 
   refInput: {
@@ -478,8 +885,10 @@ const styles = {
     margin: '8px 0',
     fontSize: 11,
     background: '#0f0f0f',
-    border: '1px solid #222',
+    border:
+      '1px solid rgba(255,255,255,0.08)',
     color: '#fff',
+    borderRadius: 8,
   },
 
   smallBtn: {
@@ -487,18 +896,49 @@ const styles = {
     padding: 8,
     borderRadius: 8,
     border: 'none',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     color: '#fff',
     fontSize: 12,
+    cursor: 'pointer',
   },
 
   smallBtnOutline: {
     flex: 1,
     padding: 8,
     borderRadius: 8,
-    border: '1px solid #333',
+    border:
+      '1px solid rgba(255,255,255,0.08)',
     background: '#0f0f0f',
     color: '#fff',
     fontSize: 12,
+    cursor: 'pointer',
+  },
+
+  searchResults: {
+    marginBottom: 16,
+  },
+
+  resultCard: {
+    padding: 14,
+    borderRadius: 12,
+    background:
+      'rgba(255,255,255,0.04)',
+    marginBottom: 10,
+    cursor: 'pointer',
+    border:
+      '1px solid rgba(255,255,255,0.06)',
+  },
+
+  noResults: {
+    padding: 14,
+    borderRadius: 12,
+    background:
+      'rgba(255,0,60,0.08)',
+    border:
+      '1px solid rgba(255,0,60,0.2)',
+    color: '#ff7b9c',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 };

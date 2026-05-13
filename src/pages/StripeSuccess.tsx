@@ -1,32 +1,17 @@
-import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/kasuku-logo.png';
 
-export default function Success() {
-  const [user, setUser] = useState<any>(null);
+export default function StripeSuccess() {
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const updateUser = async () => {
-      try {
-        const res = await api.get('/me');
+    const timer = setTimeout(() => {
+      navigate('/connect-stripe');
+    }, 4000);
 
-        setUser(res.data);
-
-        // ✅ Save updated user
-        localStorage.setItem('user', JSON.stringify(res.data));
-
-        // ✅ Redirect after delay
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 4000);
-
-      } catch (err) {
-        console.log('Failed to update user');
-      }
-    };
-
-    updateUser();
-  }, []);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   return (
     <div
@@ -43,12 +28,12 @@ export default function Success() {
     >
       <div
         style={{
-          background: 'rgba(24, 24, 40, 0.96)',
+          background: 'rgba(24, 24, 40, 0.95)',
           padding: '60px 50px',
           borderRadius: '28px',
           textAlign: 'center',
           width: '100%',
-          maxWidth: '650px',
+          maxWidth: '620px',
           boxShadow: '0 0 60px rgba(255,0,128,0.18)',
           border: '1px solid rgba(255,255,255,0.06)',
           backdropFilter: 'blur(20px)',
@@ -75,7 +60,7 @@ export default function Success() {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '42px',
-            color: '#fff',
+            color: 'white',
             fontWeight: 'bold',
             boxShadow: '0 0 40px rgba(255,0,128,0.35)',
           }}
@@ -85,7 +70,7 @@ export default function Success() {
 
         <h1
           style={{
-            fontSize: '50px',
+            fontSize: '48px',
             fontWeight: '800',
             marginBottom: '18px',
             lineHeight: '1.2',
@@ -95,7 +80,7 @@ export default function Success() {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Payment Successful
+          Stripe Connected Successfully
         </h1>
 
         <p
@@ -103,44 +88,15 @@ export default function Success() {
             color: '#c7c7d9',
             fontSize: '19px',
             lineHeight: '1.9',
-            maxWidth: '520px',
+            maxWidth: '500px',
             margin: '0 auto',
           }}
         >
-          Your subscription has been successfully activated.
+          Your payout account has been securely verified and connected to Kasuku.
           <br />
           <br />
-          Welcome to the next level of music distribution with Kasuku.
-          Your account now has access to premium features, advanced tools, and global release capabilities.
+          You can now receive royalties, withdrawals, and future earnings directly through Stripe with protected and reliable payouts.
         </p>
-
-        {user && (
-          <div
-            style={{
-              marginTop: '28px',
-              padding: '14px 22px',
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              display: 'inline-block',
-              color: '#fff',
-              fontSize: '16px',
-            }}
-          >
-            Active Plan:{' '}
-            <span
-              style={{
-                background:
-                  'linear-gradient(to right, #ff0080, #a855f7)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: '700',
-              }}
-            >
-              {user.plan}
-            </span>
-          </div>
-        )}
 
         <div
           style={{
@@ -171,7 +127,7 @@ export default function Success() {
             letterSpacing: '0.5px',
           }}
         >
-          Redirecting you to your dashboard...
+          Redirecting you back to your dashboard...
         </p>
       </div>
 

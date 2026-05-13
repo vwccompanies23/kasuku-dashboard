@@ -75,6 +75,7 @@ import PaypalWithdraw from './pages/PaypalWithdraw';
 import EditRelease from './pages/EditRelease';
 import Verify from './pages/Verify';
 import CardForm from './settings/CardForm';
+import StripeSuccess from './pages/StripeSuccess';
 
 function App() {
 
@@ -208,6 +209,7 @@ function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/help" element={<Help />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/stripe-success" element={<StripeSuccess />} />
 
         {/* PAYMENT */}
         <Route path="/payment" element={<Payment />} />

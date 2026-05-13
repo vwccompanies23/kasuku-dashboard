@@ -241,8 +241,25 @@ localStorage.setItem(
         },
       );
 
-      // ✅ NORMAL FLOW
-      navigate('/dashboard');
+      // ✅ CHECK IF USER CAME FROM PRICING
+const redirectAfterLogin =
+  localStorage.getItem(
+    'redirectAfterLogin',
+  );
+
+if (redirectAfterLogin) {
+
+  localStorage.removeItem(
+    'redirectAfterLogin',
+  );
+
+  navigate(redirectAfterLogin);
+
+} else {
+
+  navigate('/dashboard');
+
+}
 
     } catch (err) {
       console.error(err);
