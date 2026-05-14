@@ -1,31 +1,77 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/kasuku-logo.png';
 
 export default function Payment() {
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [plan, setPlan] = useState('');
   const [billing, setBilling] = useState('monthly');
+
   const [loading, setLoading] = useState(false);
 
+  // =========================
+  // LOAD PLAN + BILLING
+  // =========================
   useEffect(() => {
+
+    const params =
+      new URLSearchParams(location.search);
+
+    const urlPlan =
+      params.get('plan');
+
+    const urlBilling =
+      params.get('billing');
+
     const savedPlan =
       localStorage.getItem('selectedPlan');
 
     const savedBilling =
       localStorage.getItem('selectedBilling');
 
-    if (savedPlan) {
-      setPlan(savedPlan);
+    // ✅ PRIORITY = URL PARAMS
+    const finalPlan =
+      urlPlan || savedPlan || '';
+
+    const finalBilling =
+      urlBilling || savedBilling || 'monthly';
+
+    setPlan(finalPlan);
+
+    setBilling(finalBilling);
+
+    // ✅ KEEP STORAGE UPDATED
+    if (finalPlan) {
+      localStorage.setItem(
+        'selectedPlan',
+        finalPlan
+      );
     }
 
-    if (savedBilling) {
-      setBilling(savedBilling);
+    if (finalBilling) {
+      localStorage.setItem(
+        'selectedBilling',
+        finalBilling
+      );
     }
-  }, []);
 
+  }, [location]);
+
+  // =========================
+  // PAYMENT
+  // =========================
   const handlePayment = async () => {
+
     if (!plan) {
+
       alert('No plan selected ❌');
+
+      navigate('/pricing');
+
       return;
     }
 
@@ -33,26 +79,25 @@ export default function Payment() {
 
     try {
 
-      // ✅ FIXED
       const res = await api.post(
         '/payments/subscribe',
         {
           plan,
           billing,
-        },
+        }
       );
 
       const data = res.data;
 
       console.log(
-        'FULL RESPONSE:',
-        data,
+        'PAYMENT RESPONSE:',
+        data
       );
 
-      if (!data || !data.url) {
+      if (!data?.url) {
 
         alert(
-          'Payment failed: No Stripe URL ❌',
+          'Stripe checkout failed ❌'
         );
 
         setLoading(false);
@@ -61,16 +106,19 @@ export default function Payment() {
       }
 
       // ✅ REDIRECT TO STRIPE
-      window.location.href = data.url;
+      window.location.href =
+        data.url;
 
     } catch (err) {
 
       console.error(
         'PAYMENT ERROR:',
-        err,
+        err
       );
 
-      alert('Payment failed ❌');
+      alert(
+        'Payment failed ❌'
+      );
 
     } finally {
 
@@ -80,6 +128,7 @@ export default function Payment() {
 
   return (
     <div style={styles.container}>
+
       <div style={styles.card}>
 
         {/* LOGO */}
@@ -102,6 +151,7 @@ export default function Payment() {
         {/* PLAN */}
         <p style={styles.plan}>
           Selected Plan:{' '}
+
           <span
             style={{
               color: '#ff003c',
@@ -116,6 +166,7 @@ export default function Payment() {
         {/* BILLING */}
         <p style={styles.plan}>
           Billing:{' '}
+
           <span
             style={{
               color: '#7c3aed',
@@ -133,7 +184,7 @@ export default function Payment() {
         >
           {loading
             ? 'Processing...'
-            : 'Pay with Card 💳'}
+            : `Pay ${billing.toUpperCase()} 💳`}
         </button>
 
         <p style={styles.secureText}>
@@ -141,6 +192,7 @@ export default function Payment() {
         </p>
 
       </div>
+
     </div>
   );
 }

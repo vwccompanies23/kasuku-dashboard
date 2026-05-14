@@ -241,25 +241,58 @@ localStorage.setItem(
         },
       );
 
-      // ✅ CHECK IF USER CAME FROM PRICING
-const redirectAfterLogin =
-  localStorage.getItem(
-    'redirectAfterLogin',
-  );
+    // =========================
+      // ✅ PAYMENT / DASHBOARD FLOW
+      // =========================
 
-if (redirectAfterLogin) {
+      const redirectAfterLogin =
+        localStorage.getItem(
+          'redirectAfterLogin',
+        );
 
-  localStorage.removeItem(
-    'redirectAfterLogin',
-  );
+      const selectedPlan =
+        localStorage.getItem(
+          'selectedPlan',
+        );
 
-  navigate(redirectAfterLogin);
+      const selectedBilling =
+        localStorage.getItem(
+          'selectedBilling',
+        );
 
-} else {
+      // ✅ ONLY NEW USERS FROM PRICING
+      if (
+        redirectAfterLogin ===
+          '/payment' &&
+        selectedPlan
+      ) {
 
-  navigate('/dashboard');
+        localStorage.removeItem(
+          'redirectAfterLogin',
+        );
 
-}
+        navigate(
+          `/payment?plan=${selectedPlan}&billing=${selectedBilling || 'monthly'}`
+        );
+
+        return;
+      }
+
+      // ✅ CLEAR OLD PAYMENT CACHE
+      localStorage.removeItem(
+        'redirectAfterLogin',
+      );
+
+      localStorage.removeItem(
+        'selectedPlan',
+      );
+
+      localStorage.removeItem(
+        'selectedBilling',
+      );
+
+      // ✅ EXISTING USERS
+      navigate('/dashboard');
 
     } catch (err) {
       console.error(err);

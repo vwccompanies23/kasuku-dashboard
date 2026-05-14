@@ -123,6 +123,19 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+  window.$crisp = [];
+  window.CRISP_WEBSITE_ID = "a9201a94-f3a2-460d-ae42-6b796c0b3ee2";
+
+  const d = document;
+  const s = d.createElement("script");
+
+  s.src = "https://client.crisp.chat/l.js";
+  s.async = true;
+
+  d.getElementsByTagName("head")[0].appendChild(s);
+}, []);
+
   // ✅ FIXED AUTO LOGOUT
   useEffect(() => {
     const interval = setInterval(() => {
