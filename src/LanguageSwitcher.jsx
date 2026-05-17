@@ -1,39 +1,66 @@
-import { useLanguage } from '../LanguageContext';
+import { useLanguage }
+from '../LanguageContext';
 
 export default function LanguageSwitcher() {
-  const { lang, changeLang } = useLanguage();
+
+  const {
+    lang,
+    changeLang,
+  } = useLanguage();
 
   return (
-    <div style={styles.wrapper}>
-      <select
-        value={lang}
-        onChange={(e) => changeLang(e.target.value)}
-        style={styles.select}
-      >
-        <option value="en">EN</option>
-        <option value="fr">FR</option>
-        <option value="sw">SW</option>
-      </select>
-    </div>
+
+    <select
+      value={lang}
+      onChange={(e) =>
+        changeLang(e.target.value)
+      }
+      style={styles.select}
+    >
+
+      <option value="en">
+        EN 🇺🇸
+      </option>
+
+      <option value="fr">
+        FR 🇫🇷
+      </option>
+
+      <option value="sw">
+        Kiswahili 🇨🇩
+      </option>
+
+      <option value="ar">
+        AR 🇸🇦
+      </option>
+
+      <option value="rn">
+        Kirundi 🇧🇮
+      </option>
+
+      <option value="lg">
+        Luganda 🇺🇬
+      </option>
+
+    </select>
   );
 }
 
 const styles = {
-  wrapper: {
-    padding: 3,
-    borderRadius: 12,
-    background: 'linear-gradient(135deg,#ff003c,#7c3aed)',
-    boxShadow: '0 0 15px rgba(124,58,237,0.4)',
-  },
 
   select: {
-    background: '#0a0a0a',
+
+    background: '#141414',
+
     color: '#fff',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: 10,
-    outline: 'none',
+
+    border:
+      '1px solid #333',
+
+    padding: '6px 10px',
+
+    borderRadius: 8,
+
     cursor: 'pointer',
-    fontWeight: 'bold',
   },
 };

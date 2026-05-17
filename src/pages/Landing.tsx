@@ -3,17 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import logoImg from '../assets/kasuku-logo.png';
 
+import translations
+from '../translations';
+
+import {
+  useLanguage
+} from '../LanguageContext';
+
 export default function Landing() {
   const [plan, setPlan] = useState('monthly');
   const [posts, setPosts] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [pricing, setPricing] = useState<any>(null);
 
-  // ✅ ADDED (FIX CRASH)
-  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
-
   // ✅ ADDED
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD');
+
+  const {
+  lang,
+  changeLang
+} = useLanguage();
+
+const t =
+  translations[lang]
+  || translations.en;
 
   const navigate = useNavigate();
 
@@ -112,7 +125,7 @@ export default function Landing() {
           value={lang}
           onChange={(e) => {
             const selected = e.target.value;
-            setLang(selected);
+            changeLang(selected);
             localStorage.setItem('lang', selected);
           }}
           style={{
@@ -132,7 +145,7 @@ export default function Landing() {
         </select>
 
         <div style={styles.navLinks}>
-          <span onClick={() => scrollTo('features')} style={styles.link}>Features</span>
+          <span onClick={() => scrollTo('features')} style={styles.link}>{t.Features}</span>
           <span onClick={() => scrollTo('pricing')} style={styles.link}>Pricing</span>
           <a href="/login" style={styles.link}>Login</a>
           <a href="/signup" style={styles.ctaBtn}>Get Started</a>
@@ -158,7 +171,7 @@ export default function Landing() {
       {/* HERO */}
       <section style={styles.hero}>
         <h1 style={styles.heroTitle}>
-          <div>Distribute Your Music</div>
+          <div>{t.distribute}</div>
           <div style={styles.gradient}>Across the Universe</div>
         </h1>
 
@@ -169,7 +182,7 @@ export default function Landing() {
         <div style={styles.heroBtns}>
           <a href="/signup" style={styles.primaryBtn}>Start Now 🚀</a>
           <button onClick={() => scrollTo('pricing')} style={styles.secondaryBtn}>
-            View Pricing
+           {t.viewPricing}
           </button>
         </div>
       </section>
