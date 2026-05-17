@@ -77,6 +77,31 @@ import Verify from './pages/Verify';
 import CardForm from './settings/CardForm';
 import StripeSuccess from './pages/StripeSuccess';
 
+import DMCA from './pages/DMCA';
+import RefundPolicy from './pages/RefundPolicy';
+import CommunityGuidelines from './pages/CommunityGuidelines';
+import CookiePolicy from './pages/CookiePolicy';
+import CopyrightClaim from './pages/CopyrightClaim';
+import ContentRules from './pages/ContentRules';
+import VerifyArtist
+from './pages/VerifyArtist';
+
+import AdminCopyrightClaims
+from './pages/admin/AdminCopyrightClaims';
+import AdminCopyrightReviewing
+from './pages/admin/AdminCopyrightReviewing';
+
+import AdminArtistVerifications
+from './pages/admin/AdminArtistVerifications';
+
+
+import AdminCopyrightApproved
+from './pages/admin/AdminCopyrightApproved';
+
+import AdminCopyrightRejected
+from './pages/admin/AdminCopyrightRejected';
+import AdminCopyrightStatus from './pages/admin/AdminCopyrightStatus';
+
 function App() {
 
   // ✅ FIX: initialize correctly (prevents refresh logout)
@@ -211,6 +236,43 @@ function App() {
               : <Landing />
           }
         />
+
+<Route
+  path="/content-rules"
+  element={<ContentRules />}
+/>
+
+<Route
+  path="/verify-artist"
+  element={<VerifyArtist />}
+/>
+
+<Route
+  path="/admin/artist-verifications"
+  element={
+    <AdminArtistVerifications />
+  }
+/>
+
+<Route
+  path="/admin/copyright-status"
+  element={<AdminCopyrightStatus />}
+/>
+
+        <Route path="/dmca" element={<DMCA />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route
+  path="/community-guidelines"
+  element={<CommunityGuidelines />}
+/>
+<Route
+  path="/cookie-policy"
+  element={<CookiePolicy />}
+/>
+<Route
+  path="/copyright-claim"
+  element={<CopyrightClaim />}
+/>
         
         <Route path="/verify" element={<Verify />} />
         <Route path="/about" element={<About />} />
@@ -284,6 +346,42 @@ function App() {
         <Route path="/admin/withdraw" element={protect(<AdminLayout><AdminWithdraw /></AdminLayout>)} />
         <Route path="/admin/tax" element={protect(<AdminLayout><AdminTax /></AdminLayout>)} />
         <Route path="/admin/approvals/albums" element={protect(<AdminLayout><AdminAlbums /></AdminLayout>)} />
+
+        <Route
+  path="/admin/copyright-claims"
+  element={protect(
+    <AdminLayout>
+      <AdminCopyrightClaims />
+    </AdminLayout>
+  )}
+/>
+
+<Route
+  path="/admin/copyright-reviewing"
+  element={
+    <AdminLayout>
+      <AdminCopyrightReviewing />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/admin/copyright-approved"
+  element={
+    <AdminLayout>
+      <AdminCopyrightApproved />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/admin/copyright-rejected"
+  element={
+    <AdminLayout>
+      <AdminCopyrightRejected />
+    </AdminLayout>
+  }
+/>
 
         <Route path="*" element={<div style={{color:'#fff', padding:20}}>Page not found</div>} />
 

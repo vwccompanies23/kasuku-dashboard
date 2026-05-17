@@ -122,6 +122,61 @@ return () => {
           <div style={styles.count}>{videoCount}</div>
         </div>
 
+        {/* ⚖️ COPYRIGHT CLAIMS */}
+<div
+  style={styles.card}
+  onClick={() =>
+    navigate('/admin/copyright-claims')
+  }
+>
+onClick={async () => {
+
+  await updateStatus(
+    claim._id,
+    'reviewing'
+  );
+
+  navigate(
+    '/admin/copyright/reviewing'
+  );
+}}
+
+onClick={async () => {
+
+  await updateStatus(
+    claim._id,
+    'approved'
+  );
+
+  alert(
+    'Claim approved successfully.'
+  );
+
+  navigate(
+    '/admin/copyright/approved'
+  );
+}}
+
+onClick={async () => {
+
+  await updateStatus(
+    claim._id,
+    'rejected'
+  );
+
+  alert(
+    'Claim rejected.'
+  );
+
+  navigate(
+    '/admin/copyright/rejected'
+  );
+}}
+
+
+  ⚖️ Copyright Claims
+</div>
+
       </div>
     </div>
   );

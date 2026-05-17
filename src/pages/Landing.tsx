@@ -330,11 +330,60 @@ export default function Landing() {
   <p>©️ 2026 Kasuku</p>
 
   {/* TOP ROW */}
-  <div style={styles.footerLinks}>
-    <span onClick={() => navigate('/terms')} style={styles.link}>Terms</span>
-    <span onClick={() => navigate('/privacy')} style={styles.link}>Privacy</span>
-    <span onClick={() => navigate('/help')} style={styles.link}>Help</span>
-  </div>
+ <div style={styles.footerLinks}>
+
+  <span onClick={() => navigate('/terms')} style={styles.link}>
+    Terms
+  </span>
+
+  <span onClick={() => navigate('/privacy')} style={styles.link}>
+    Privacy
+  </span>
+
+  <span onClick={() => navigate('/help')} style={styles.link}>
+    Help
+  </span>
+
+  <span onClick={() => navigate('/dmca')} style={styles.link}>
+    DMCA
+  </span>
+
+  <span
+    onClick={() => navigate('/refund-policy')}
+    style={styles.link}
+  >
+    Refund Policy
+  </span>
+
+  <span
+    onClick={() => navigate('/community-guidelines')}
+    style={styles.link}
+  >
+    Community
+  </span>
+
+  <span
+    onClick={() => navigate('/cookie-policy')}
+    style={styles.link}
+  >
+    Cookies
+  </span>
+
+  <span
+    onClick={() => navigate('/content-rules')}
+    style={styles.link}
+  >
+    Content Rules
+  </span>
+
+  <span
+    onClick={() => navigate('/copyright-claim')}
+    style={styles.link}
+  >
+    Copyright Claim
+  </span>
+
+</div>
 
   {/* 🔥 SECOND ROW */}
   <div style={styles.footerBottom}>

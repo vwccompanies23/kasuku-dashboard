@@ -164,7 +164,7 @@ const translations = {
     why: [
       'Artist-first system',
       'Direct creator-to-fan connection',
-      'CDF & USDC support',
+      'CDF & USD support',
       'Built for long-term vision',
     ],
     whyEnd: 'We define direction.',
