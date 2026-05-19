@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { userState } from 'react';
+import { api } from '../api';
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +18,7 @@ export default function Signup() {
     }
 
     try {
-      await axios.post('http://localhost:3000/auth/signup', {
+      await api.post('/auth/signup', {
         email,
         password,
         artist,
