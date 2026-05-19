@@ -145,9 +145,9 @@ const t =
         </select>
 
         <div style={styles.navLinks}>
-          <span onClick={() => scrollTo('features')} style={styles.link}>{t.Features}</span>
-          <span onClick={() => scrollTo('pricing')} style={styles.link}>Pricing</span>
-          <a href="/login" style={styles.link}>Login</a>
+          <span onClick={() => scrollTo('features')} style={styles.link}>{t.features}</span>
+          <span onClick={() => scrollTo('pricing')} style={styles.link}>{t.pricing}</span>
+          <a href="/login" style={styles.link}>{t.login}</a>
           <a href="/signup" style={styles.ctaBtn}>Get Started</a>
 
           {/* 💰 CURRENCY */}
@@ -172,7 +172,7 @@ const t =
       <section style={styles.hero}>
         <h1 style={styles.heroTitle}>
           <div>{t.distribute}</div>
-          <div style={styles.gradient}>Across the Universe</div>
+          <div style={styles.gradient}>{t.universe}</div>
         </h1>
 
         <p style={styles.heroSub}>
@@ -236,7 +236,7 @@ const t =
             </ul>
 
             <button style={styles.cardBtn} onClick={() => handlePlanSelect('solo')}>
-              Get Started
+              {t.getStarted}
             </button>
           </div>
 
@@ -314,7 +314,7 @@ const t =
 
       {/* POSTS */}
       <div style={styles.feedSection}>
-        <h2 style={styles.feedTitle}>🔥 Latest Updates</h2>
+        <h2 style={styles.feedTitle}>🔥 {t.atestUpdates}</h2>
 
         {posts.length === 0 && <p style={{ opacity: 0.6 }}>No updates yet</p>}
 
