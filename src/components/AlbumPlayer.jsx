@@ -32,7 +32,8 @@ export default function AlbumPlayer({ releaseId }: any) {
     if (!audioRef.current || !tracks[current]) return;
 
     audioRef.current.src =
-      'http://localhost:3000' + tracks[current].fileUrl;
+  'https://kasuku-backend.onrender.com' +
+  tracks[current].fileUrl;
 
     if (playing) {
       audioRef.current.play();

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { socket } from '../../utils/socket';
+import { api } from '../../api';
 
 export default function AdminFinanceDashboard() {
   const [data, setData] = useState({
@@ -18,11 +19,11 @@ export default function AdminFinanceDashboard() {
     return () => socket.off('finance:update');
   }, []);
 
-  const fetchData = async () => {
-    const res = await fetch('http://localhost:5000/admin/finance');
-    const d = await res.json();
-    setData(d);
-  };
+  const res = await api.get('/admin/finance');
+
+const d = res.data;
+
+setData(d);
 
   return (
     <div style={styles.container}>

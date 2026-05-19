@@ -67,7 +67,7 @@ export default function SmartLink() {
         {/* COVER */}
         {release.music?.[0]?.coverUrl && (
           <img
-            src={`http://localhost:3000${release.music[0].coverUrl}`}
+            src={`https://kasuku-backend.onrender.com${release.music[0].coverUrl}`}
             style={styles.cover}
           />
         )}

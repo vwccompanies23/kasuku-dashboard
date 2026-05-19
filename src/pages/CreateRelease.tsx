@@ -65,6 +65,9 @@ const userPlan =
   const [selectedPlatforms, setSelectedPlatforms] =
     useState([]);
 
+    const [publishing, setPublishing] =
+  useState(false);
+
   const [artists, setArtists] = useState<any[]>([]);
 
   const [form, setForm] = useState({
@@ -120,7 +123,10 @@ const userPlan =
       'releaseDraft',
       JSON.stringify({
         form,
-        tracks,
+        tracks: tracks.map((t) => ({
+  ...t,
+  file: null,
+})),
         coverPreview,
         selectedPlatforms,
       })
@@ -218,7 +224,7 @@ const userPlan =
 
     const url = URL.createObjectURL(file);
 
-    const audio = new Audio (url);
+    const audio = new Audio(url);
 
     audio.onloadedmetadata = () => {
       const duration = Math.floor(
@@ -480,6 +486,9 @@ formData.append(
   // =========================
 
   const handlePublish = async () => {
+
+    setPublishing(true);
+
     try {
       // ✅ VALIDATION
 if (!form.title) {
@@ -517,8 +526,13 @@ await uploadToCloud();
         'releaseDraft'
       );
 
+      setPublishing(false);
+
       navigate('/my-music');
     } catch (err) {
+
+      setPublishing(false);
+
       console.log(err);
 
      console.log(
@@ -818,7 +832,7 @@ alert(
               updatedTrack
             ) => {
               const copy = [
-                ...tracks,
+               ...tracks 
               ];
 
               copy[0] =
@@ -900,11 +914,14 @@ alert(
       />
 
       <button
-        style={styles.publish}
-        onClick={handlePublish}
-      >
-        🚀 Publish Release
-      </button>
+  style={styles.publish}
+  onClick={handlePublish}
+  disabled={publishing}
+>
+  {publishing
+    ? 'Uploading...'
+    : '🚀 Publish Release'}
+</button>
     </div>
   );
 }

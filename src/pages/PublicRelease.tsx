@@ -53,7 +53,7 @@ export default function PublicRelease() {
         {/* COVER */}
         {release.music?.[0]?.coverUrl && (
           <img
-            src={`http://localhost:3000${release.music[0].coverUrl}`}
+            src={`https://kasuku-backend.onrender.com${release.music[0].coverUrl}`}
             style={styles.cover}
           />
         )}
@@ -85,7 +85,7 @@ export default function PublicRelease() {
 
               <audio
                 controls
-                src={`http://localhost:3000${track.fileUrl}`}
+                src={`https://kasuku-backend.onrender.com${track.fileUrl}`}
                 style={{ width: '100%' }}
               />
             </div>

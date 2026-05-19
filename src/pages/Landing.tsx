@@ -54,7 +54,41 @@ const t =
     try {
       const res = await api.get('/pricing');
 
-      setPricing(res.data);
+      const plans = res.data || [];
+
+const formatted = {
+  soloMonthly:
+    plans.find(
+      (p) => p.plan === 'solo'
+    )?.monthlyPrice || 0,
+
+  soloYearly:
+    plans.find(
+      (p) => p.plan === 'solo'
+    )?.yearlyPrice || 0,
+
+  artistsMonthly:
+    plans.find(
+      (p) => p.plan === 'artists'
+    )?.monthlyPrice || 0,
+
+  artistsYearly:
+    plans.find(
+      (p) => p.plan === 'artists'
+    )?.yearlyPrice || 0,
+
+  proMonthly:
+    plans.find(
+      (p) => p.plan === 'pro'
+    )?.monthlyPrice || 0,
+
+  proYearly:
+    plans.find(
+      (p) => p.plan === 'pro'
+    )?.yearlyPrice || 0,
+};
+
+setPricing(formatted);
     } catch (err) {
       console.error('Pricing error:', err);
     }

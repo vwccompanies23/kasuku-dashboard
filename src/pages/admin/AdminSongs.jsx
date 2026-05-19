@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
 
+const BASE_URL =
+  'https://kasuku-backend.onrender.com';
+
 export default function AdminSongs() {
   const [tab, setTab] = useState('pending');
   const [songs, setSongs] = useState([]);
@@ -197,7 +200,11 @@ export default function AdminSongs() {
 
             {/* COVER */}
             <img
-              src={`http://localhost:3000${song.music?.[0]?.coverUrl}`}
+              src={
+                song.music?.[0]?.coverUrl?.startsWith('http')
+                  ? song.music?.[0]?.coverUrl
+                  : `${BASE_URL}${song.music?.[0]?.coverUrl}`
+              }
               alt=""
               style={styles.cover}
             />
@@ -251,7 +258,11 @@ export default function AdminSongs() {
               {/* AUDIO */}
               <audio
                 controls
-                src={`http://localhost:3000${song.music?.[0]?.fileUrl}`}
+                src={
+                  song.music?.[0]?.fileUrl?.startsWith('http')
+                    ? song.music?.[0]?.fileUrl
+                    : `${BASE_URL}${song.music?.[0]?.fileUrl}`
+                }
                 style={styles.audio}
               />
 

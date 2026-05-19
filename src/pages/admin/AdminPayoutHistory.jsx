@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
+import { api } from '../../api';
 
 export default function AdminPayoutHistory() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/admin/payouts')
-      .then(res => res.json())
-      .then(data => {
-        setHistory(Array.isArray(data) ? data : data.payouts || []);
-      });
+    api.get('/admin/payouts')
+  .then((res) => {
+    const data = res.data;
+
+    setHistory(
+      Array.isArray(data)
+        ? data
+        : data.payouts || []
+    );
+  });
   }, []);
 
   return (

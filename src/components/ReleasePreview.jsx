@@ -30,7 +30,7 @@ export default function ReleasePreview({
 
     // backend file
     if (t.url) {
-      return `http://localhost:3000${t.url}`;
+      return `https://kasuku-backend.onrender.com${t.url}`;
     }
 
     return null;

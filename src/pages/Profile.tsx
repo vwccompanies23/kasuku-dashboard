@@ -471,9 +471,10 @@ export default function Profile() {
 
             <img
               src={
-                user.avatar ||
-                'https://via.placeholder.com/100'
-              }
+  user.avatar
+    ? `https://kasuku-backend.onrender.com${user.avatar}`
+    : 'https://via.placeholder.com/100'
+}
               style={styles.avatar}
             />
 

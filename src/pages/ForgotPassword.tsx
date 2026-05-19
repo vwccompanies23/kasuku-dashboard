@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { api } from '../api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -19,7 +19,10 @@ export default function ForgotPassword() {
     try {
       setLoading(true);
 
-      await axios.post('http://localhost:3000/auth/send-otp', { email });
+      await api.post(
+  'https://kasuku-backend.onrender.com/auth/send-otp',
+  { email }
+);
 
       alert('OTP sent 👽📩');
       setStep(2);
@@ -39,7 +42,9 @@ export default function ForgotPassword() {
     try {
       setLoading(true);
 
-      await axios.post('http://localhost:3000/auth/verify-otp', {
+      await api.post(
+  'https://kasuku-backend.onrender.com/auth/verify-otp',
+  {
         email,
         code,
       });
@@ -68,7 +73,9 @@ export default function ForgotPassword() {
     try {
       setLoading(true);
 
-      await axios.post('http://localhost:3000/auth/reset-password', {
+      await axios.post(
+  'https://kasuku-backend.onrender.com/auth/reset-password',
+  {
         email,
         code,
         password,
