@@ -1,22 +1,44 @@
-import React, { useState } from 'react';
+import React, {
+  useState,
+} from 'react';
+
 import logo from '../assets/kasuku-logo.png';
+
+import {
+  useLanguage,
+} from '../LanguageContext';
+
+import translations
+from '../translations';
 
 export default function CopyrightClaim() {
 
-  const [submitted, setSubmitted] =
+  const {
+    lang,
+  } = useLanguage();
+
+  const t =
+    translations?.[lang] ||
+    translations.en;
+
+  const [submitted,
+    setSubmitted] =
     useState(false);
 
-  const [loading, setLoading] =
+  const [loading,
+    setLoading] =
     useState(false);
 
-  const [form, setForm] = useState<any>({
-    fullName: '',
-    email: '',
-    copyrightedWork: '',
-    infringingUrl: '',
-    proofLink: '',
-    description: '',
-  });
+  const [form,
+    setForm] =
+    useState<any>({
+      fullName: '',
+      email: '',
+      copyrightedWork: '',
+      infringingUrl: '',
+      proofLink: '',
+      description: '',
+    });
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -30,6 +52,7 @@ export default function CopyrightClaim() {
       [e.target.name]:
         e.target.value,
     });
+
   };
 
   const handleSubmit = async (
@@ -42,31 +65,32 @@ export default function CopyrightClaim() {
 
     try {
 
-    const res = await fetch(
-  `${import.meta.env.VITE_API_URL}/copyright-claims`,
-  {
+      const res =
+        await fetch(
+          `${import.meta.env.VITE_API_URL}/copyright-claims`,
+          {
+            method: 'POST',
 
-    method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
 
-    headers: {
-      'Content-Type':
-        'application/json',
-    },
-
-    body: JSON.stringify(form),
-
-  }
-);
+            body:
+              JSON.stringify(form),
+          }
+        );
 
       if (!res.ok) {
+
         throw new Error(
           'Failed to submit claim'
         );
+
       }
 
       setSubmitted(true);
 
-      // RESET FORM
       setForm({
         fullName: '',
         email: '',
@@ -81,19 +105,24 @@ export default function CopyrightClaim() {
       console.error(err);
 
       alert(
+        t?.claimError ||
         'Something went wrong. Please try again.'
       );
 
     } finally {
 
       setLoading(false);
+
     }
+
   };
 
   return (
+
     <div style={styles.page}>
 
       {/* HERO */}
+
       <div style={styles.hero}>
 
         <img
@@ -103,19 +132,22 @@ export default function CopyrightClaim() {
         />
 
         <h1 style={styles.title}>
-          Copyright Claim Portal
+          {t?.copyrightClaimTitle ||
+            'Copyright Claim Portal'}
         </h1>
 
         <p style={styles.subtitle}>
-          Submit copyright infringement reports
-          related to music, artwork,
-          videos, or content distributed
-          through the Kasuku platform.
+          {t?.copyrightClaimSubtitle ||
+            `Submit copyright infringement reports
+            related to music, artwork,
+            videos, or content distributed
+            through the Kasuku platform.`}
         </p>
 
       </div>
 
       {/* FORM */}
+
       <div style={styles.container}>
 
         <div style={styles.card}>
@@ -124,48 +156,55 @@ export default function CopyrightClaim() {
 
             <div style={styles.success}>
 
-              <h2>
-                Claim Submitted Successfully
+              <h2 style={styles.successTitle}>
+
+                {t?.claimSubmitted ||
+                  'Claim Submitted Successfully'}
+
               </h2>
 
-              <p style={{ marginTop: 10 }}>
-                Our moderation team
-                will review your claim.
+              <p style={styles.successText}>
+
+                {t?.claimReview ||
+                  'Our moderation team will review your claim.'}
+
               </p>
 
-              <p style={{ marginTop: 10 }}>
-                Status updates may include:
+              <p style={styles.successText}>
+
+                {t?.claimStatus ||
+                  'Status updates may include:'}
+
               </p>
 
               <div style={styles.statusBox}>
-                ⏳ Pending Review
+                ⏳ {t?.pendingReview || 'Pending Review'}
               </div>
 
               <div style={styles.statusBox}>
-                👀 Under Reviewing
+                👀 {t?.underReview || 'Under Reviewing'}
               </div>
 
               <div style={styles.statusBox}>
-                ✅ Approved
+                ✅ {t?.approved || 'Approved'}
               </div>
 
               <div style={styles.statusBox}>
-                ❌ Rejected
+                ❌ {t?.rejected || 'Rejected'}
               </div>
 
             </div>
 
           ) : (
 
-            <form
-              onSubmit={handleSubmit}
-            >
+            <form onSubmit={handleSubmit}>
 
               {/* FULL NAME */}
+
               <div style={styles.group}>
 
                 <label style={styles.label}>
-                  Full Name
+                  {t?.fullName || 'Full Name'}
                 </label>
 
                 <input
@@ -180,10 +219,11 @@ export default function CopyrightClaim() {
               </div>
 
               {/* EMAIL */}
+
               <div style={styles.group}>
 
                 <label style={styles.label}>
-                  Email Address
+                  {t?.emailAddress || 'Email Address'}
                 </label>
 
                 <input
@@ -198,10 +238,12 @@ export default function CopyrightClaim() {
               </div>
 
               {/* WORK */}
+
               <div style={styles.group}>
 
                 <label style={styles.label}>
-                  Copyrighted Work
+                  {t?.copyrightedWork ||
+                    'Copyrighted Work'}
                 </label>
 
                 <input
@@ -216,10 +258,12 @@ export default function CopyrightClaim() {
               </div>
 
               {/* URL */}
+
               <div style={styles.group}>
 
                 <label style={styles.label}>
-                  Infringing Content URL
+                  {t?.infringingContent ||
+                    'Infringing Content URL'}
                 </label>
 
                 <input
@@ -234,10 +278,11 @@ export default function CopyrightClaim() {
               </div>
 
               {/* PROOF */}
+
               <div style={styles.group}>
 
                 <label style={styles.label}>
-                  Proof Link
+                  {t?.proofLink || 'Proof Link'}
                 </label>
 
                 <input
@@ -245,17 +290,21 @@ export default function CopyrightClaim() {
                   name="proofLink"
                   value={form.proofLink}
                   onChange={handleChange}
-                  placeholder="Google Drive, Dropbox, Website..."
+                  placeholder={
+                    t?.proofPlaceholder ||
+                    'Google Drive, Dropbox, Website...'
+                  }
                   style={styles.input}
                 />
 
               </div>
 
               {/* DESCRIPTION */}
+
               <div style={styles.group}>
 
                 <label style={styles.label}>
-                  Description
+                  {t?.description || 'Description'}
                 </label>
 
                 <textarea
@@ -270,15 +319,29 @@ export default function CopyrightClaim() {
               </div>
 
               {/* BUTTON */}
+
               <button
                 type="submit"
-                style={styles.button}
+                style={{
+                  ...styles.button,
+
+                  opacity:
+                    loading
+                      ? 0.7
+                      : 1,
+                }}
                 disabled={loading}
               >
 
                 {loading
-                  ? 'Submitting...'
-                  : 'Submit Claim'}
+                  ? (
+                    t?.submitting ||
+                    'Submitting...'
+                  )
+                  : (
+                    t?.submitClaim ||
+                    'Submit Claim'
+                  )}
 
               </button>
 
@@ -289,165 +352,322 @@ export default function CopyrightClaim() {
         </div>
 
         {/* FOOTER */}
+
         <div style={styles.footer}>
 
-          ©️ {new Date().getFullYear()}
-          {' '}Kasuku.
+          ©️ {new Date().getFullYear()} Kasuku.
 
-          Copyright Protection
-          & Rights Enforcement.
+          <br />
+
+          {t?.copyrightFooter ||
+            'Copyright Protection & Rights Enforcement.'}
 
         </div>
 
       </div>
 
     </div>
+
   );
+
 }
 
 const styles: any = {
 
   page: {
+
     minHeight: '100vh',
+
+    width: '100%',
+
+    overflowX: 'hidden',
+
+    boxSizing: 'border-box',
+
     background:
       'radial-gradient(circle at top, #1a002b 0%, #020617 45%, #000 100%)',
+
     color: '#fff',
-    paddingBottom: 60,
-    overflowX: 'hidden',
-    width: '100%',
+
+    paddingBottom: 70,
   },
 
   hero: {
-    paddingTop: 70,
-    paddingBottom: 50,
+
+    padding:
+      'clamp(70px, 10vw, 110px) 20px 50px',
+
     textAlign: 'center',
-    paddingLeft: 20,
-    paddingRight: 20,
+
+    width: '100%',
+
+    boxSizing: 'border-box',
   },
 
   logo: {
-    width: 110,
+
+    width:
+      'clamp(75px, 12vw, 110px)',
+
     marginBottom: 20,
+
     filter:
       'drop-shadow(0 0 25px rgba(124,58,237,0.6))',
   },
 
   title: {
+
     fontSize:
-      'clamp(32px, 6vw, 42px)',
+      'clamp(34px, 7vw, 56px)',
+
     fontWeight: 'bold',
-    marginBottom: 15,
-    lineHeight: '60px',
+
+    marginBottom: 18,
+
+    lineHeight: 1.2,
+
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
-    WebkitBackgroundClip: 'text',
+
+    WebkitBackgroundClip:
+      'text',
+
     WebkitTextFillColor:
       'transparent',
+
+    wordBreak: 'break-word',
   },
 
   subtitle: {
-    maxWidth: 760,
+
+    maxWidth: 850,
+
     margin: '0 auto',
+
     color: '#b0b0b0',
-    lineHeight: 1.8,
-    fontSize: 17,
+
+    lineHeight: 1.9,
+
+    fontSize:
+      'clamp(15px, 2vw, 18px)',
+
+    padding:
+      '0 clamp(0px, 2vw, 20px)',
+
+    wordBreak: 'break-word',
   },
 
   container: {
-    maxWidth: 850,
+
+    width: '100%',
+
+    maxWidth: 900,
+
     margin: '0 auto',
-    paddingLeft: 20,
-    paddingRight: 20,
+
+    padding:
+      '0 clamp(16px, 3vw, 24px)',
+
+    boxSizing: 'border-box',
   },
 
   card: {
+
     background:
       'rgba(255,255,255,0.04)',
+
     border:
       '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 22,
-    padding: 30,
+
+    borderRadius:
+      'clamp(20px, 3vw, 30px)',
+
+    padding:
+      'clamp(22px, 4vw, 36px)',
+
     backdropFilter: 'blur(18px)',
+
     boxShadow:
       '0 0 30px rgba(124,58,237,0.15)',
+
+    width: '100%',
+
+    boxSizing: 'border-box',
+
+    overflow: 'hidden',
   },
 
   group: {
-    marginBottom: 22,
+
+    marginBottom: 24,
   },
 
   label: {
+
     display: 'block',
+
     marginBottom: 10,
+
     color: '#ccc',
+
+    fontSize:
+      'clamp(14px, 2vw, 16px)',
   },
 
   input: {
+
     width: '100%',
-    padding: 14,
-    borderRadius: 12,
+
+    padding:
+      '14px 16px',
+
+    borderRadius: 14,
+
     border:
       '1px solid rgba(255,255,255,0.08)',
+
     background:
       'rgba(255,255,255,0.04)',
+
     color: '#fff',
+
     outline: 'none',
+
     boxSizing: 'border-box',
+
+    fontSize:
+      'clamp(14px, 2vw, 16px)',
   },
 
   textarea: {
+
     width: '100%',
-    padding: 14,
-    borderRadius: 12,
+
+    minHeight: 160,
+
+    padding:
+      '14px 16px',
+
+    borderRadius: 14,
+
     border:
       '1px solid rgba(255,255,255,0.08)',
+
     background:
       'rgba(255,255,255,0.04)',
+
     color: '#fff',
+
     outline: 'none',
+
     resize: 'vertical',
+
     boxSizing: 'border-box',
+
+    fontSize:
+      'clamp(14px, 2vw, 16px)',
   },
 
   button: {
+
     width: '100%',
-    padding: 15,
-    borderRadius: 14,
+
+    padding:
+      '16px 20px',
+
+    borderRadius: 16,
+
     border: 'none',
+
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
+
     color: '#fff',
+
     fontWeight: 'bold',
+
     cursor: 'pointer',
-    fontSize: 15,
-    opacity: 1,
+
+    fontSize:
+      'clamp(15px, 2vw, 17px)',
+
+    transition:
+      '0.2s ease',
   },
 
   success: {
-    padding: 20,
-    borderRadius: 16,
+
+    padding:
+      'clamp(18px, 4vw, 30px)',
+
+    borderRadius: 20,
+
     background:
       'rgba(0,255,150,0.08)',
+
     border:
       '1px solid rgba(0,255,150,0.25)',
+
     color: '#8fffc1',
+
     textAlign: 'center',
+
     lineHeight: 1.8,
   },
 
-  statusBox: {
+  successTitle: {
+
+    fontSize:
+      'clamp(24px, 5vw, 34px)',
+
+    lineHeight: 1.3,
+  },
+
+  successText: {
+
     marginTop: 12,
-    padding: 12,
-    borderRadius: 12,
+
+    fontSize:
+      'clamp(14px, 2vw, 16px)',
+  },
+
+  statusBox: {
+
+    marginTop: 14,
+
+    padding:
+      '14px 16px',
+
+    borderRadius: 14,
+
     background:
       'rgba(255,255,255,0.05)',
+
+    fontSize:
+      'clamp(14px, 2vw, 16px)',
+
+    wordBreak: 'break-word',
   },
 
   footer: {
+
     textAlign: 'center',
-    marginTop: 50,
-    color: '#666',
-    fontSize: 13,
+
+    marginTop: 55,
+
+    color: '#777',
+
+    fontSize:
+      'clamp(12px, 2vw, 14px)',
+
     letterSpacing: 1,
+
+    padding:
+      '0 20px',
+
+    lineHeight: 1.8,
+
+    wordBreak: 'break-word',
   },
+
 };

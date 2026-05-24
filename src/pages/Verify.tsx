@@ -1,347 +1,408 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/kasuku-logo.png';
 import { toast } from 'react-hot-toast';
 
-import { useLocation } from 'react-router-dom';
-
 export default function Verify() {
+
   const [code, setCode] = useState('');
   const [cooldown, setCooldown] = useState(0);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef =
+    useRef<HTMLInputElement>(null);
+
   const navigate = useNavigate();
+
   const location = useLocation();
-  const cardData = location.state?.cardData;
 
-  const email = localStorage.getItem('verifyEmail');
+  const cardData =
+    location.state?.cardData;
+
+  const email =
+    localStorage.getItem(
+      'verifyEmail'
+    ) || '';
 
   // =========================
-  // 🔒 GUARD (VERY IMPORTANT)
+  // 🔒 GUARD FIXED
   // =========================
+
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedEmail =
-      localStorage.getItem('verifyEmail');
 
-    // 🔥 ONLY redirect if NOT coming from card flow
-    if (
-      storedToken &&
-      storedToken !== 'undefined' &&
-      storedToken !== 'null' &&
-      location.state?.from !== 'card'
-    ) {
-      navigate('/dashboard');
+    if (!email) {
+
+      navigate('/login');
+
       return;
     }
 
-    if (!storedEmail) {
-      navigate('/login');
-    }
-  }, [navigate, location.state]);
+    const timer =
+      setTimeout(() => {
+
+        inputRef.current?.focus();
+
+      }, 300);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [email, navigate]);
 
   // =========================
   // 📩 SEND OTP
   // =========================
+
   const sendOtp = async () => {
-    if (!email) return;
+
+    if (!email || sending)
+      return;
 
     try {
+
       setSending(true);
 
-      await api.post('/auth/send-otp', {
-        email,
-      });
+      await api.post(
+        '/auth/send-otp',
+        { email }
+      );
 
       setCooldown(30);
 
       toast.success(
         'Verification code sent',
         {
-          className: 'kasuku-toast',
+          className:
+            'kasuku-toast',
           icon: '📩',
-        },
+        }
       );
 
     } catch (err: any) {
+
       const msg =
         err?.response?.data?.message;
 
-      // 🔥 Ignore cooldown error visually
       if (msg?.includes('Wait')) {
 
         toast.error(msg, {
-          className: 'kasuku-toast',
+          className:
+            'kasuku-toast',
           icon: '⚠️',
         });
 
       } else {
+
         console.error(err);
 
         toast.error(
-          'Unable to send code. Try again.',
+          'Unable to send code',
           {
-            className: 'kasuku-toast',
+            className:
+              'kasuku-toast',
             icon: '❌',
-          },
+          }
         );
       }
 
     } finally {
+
       setSending(false);
+
     }
   };
 
   // =========================
   // 🔐 VERIFY OTP
   // =========================
-  const handleVerify = async (
-    inputCode?: string,
-  ) => {
 
-    const finalCode = inputCode || code;
+  const handleVerify =
+    async (
+      inputCode?: string
+    ) => {
 
-    if (
-      finalCode.length !== 6 ||
-      loading
-    )
-      return;
+      const finalCode =
+        inputCode || code;
 
-    try {
-      setLoading(true);
-
-      const res = await api.post(
-        '/auth/verify-otp',
-        {
-          email,
-          code: finalCode,
-        },
-      );
-
-      console.log(
-        'VERIFY RESPONSE:',
-        res.data,
-      );
-
-      console.log(
-        'TOKEN FROM BACKEND:',
-        res.data?.token,
-      );
-
-      // ✅ FIXED
-      const newToken = res.data?.token;
-
-      if (!newToken) {
-
-        toast.error(
-          'Authentication failed',
-          {
-            className:
-              'kasuku-toast',
-            icon: '🔐',
-          },
-        );
-
+      if (
+        finalCode.length !== 6 ||
+        loading
+      ) {
         return;
       }
 
-      // ✅ SAVE TOKEN
-      localStorage.setItem(
-        'token',
-        String(newToken),
-      );
+      try {
 
-      // ✅ SAVE USER
-      if (res.data?.user) {
+        setLoading(true);
 
-        // full user object
+        const res =
+          await api.post(
+            '/auth/verify-otp',
+            {
+              email,
+              code: finalCode,
+            }
+          );
+
+        const newToken =
+          res.data?.token;
+
+        const user =
+          res.data?.user;
+
+        if (!newToken || !user) {
+
+          toast.error(
+            'Authentication failed',
+            {
+              className:
+                'kasuku-toast',
+              icon: '🔐',
+            }
+          );
+
+          return;
+        }
+
+        // =========================
+        // ✅ SAVE TOKEN
+        // =========================
+
+        localStorage.setItem(
+          'token',
+          String(newToken)
+        );
+
+        // =========================
+        // ✅ NORMALIZE USER
+        // =========================
+
+        const normalizedUser = {
+
+          ...user,
+
+          plan: Number(
+            user?.plan || 0
+          ),
+
+          subscriptionActive:
+            user?.subscriptionActive === true,
+
+          avatar:
+            user?.avatar ||
+            user?.image ||
+            '',
+        };
+
+        // =========================
+        // ✅ SAVE USER
+        // =========================
+
         localStorage.setItem(
           'user',
           JSON.stringify(
-            res.data.user,
-          ),
+            normalizedUser
+          )
         );
 
-        // ✅ IMPORTANT
         localStorage.setItem(
           'userId',
           String(
-            res.data.user.id,
-          ),
+            normalizedUser.id || ''
+          )
         );
 
-        // optional useful fields
         localStorage.setItem(
           'artistName',
-          res.data.user
-            .artistName || '',
+          normalizedUser.artistName || ''
         );
 
         localStorage.setItem(
           'role',
-          res.data.user.role ||
-            'user',
+          normalizedUser.role || 'user'
         );
-      }
 
- localStorage.setItem(
-  'plan',
-  String(res.data.user.plan ?? 1),
+        localStorage.setItem(
+          'plan',
+          String(
+            normalizedUser.plan || 0
+          )
+        );
+
+        localStorage.setItem(
+          'subscriptionActive',
+          String(
+            normalizedUser.subscriptionActive || false
+          )
+        );
+
+        // =========================
+        // 🧹 CLEAN PAYMENT CACHE
+        // =========================
+
+        if (
+          normalizedUser.plan >= 1
+        ) {
+
+          localStorage.removeItem(
+            'redirectAfterLogin'
+          );
+
+          localStorage.removeItem(
+            'selectedPlan'
+          );
+
+          localStorage.removeItem(
+            'selectedBilling'
+          );
+        }
+
+        // =========================
+        // 🔄 AUTH REFRESH
+        // =========================
+
+       // ✅ REFRESH AUTH EVERYWHERE
+
+window.dispatchEvent(
+  new Event('storage')
 );
 
-localStorage.setItem(
-  'subscriptionActive',
-  String(
-    res.data.user.subscriptionActive ?? false,
-  ),
+window.dispatchEvent(
+  new Event('authChanged')
 );
 
-      window.dispatchEvent(
-        new Event('storage'),
-      );
+// ✅ REMOVE VERIFY EMAIL LATER
+setTimeout(() => {
 
-      localStorage.removeItem(
-        'verifyEmail',
-      );
+  localStorage.removeItem(
+    'verifyEmail'
+  );
 
-      // 🔥 CARD FLOW
-      if (
-        location.state?.from ===
-          'card' &&
-        cardData
-      ) {
+}, 1500);
 
-        await api.post(
-          '/billing/card',
-          cardData,
+        sessionStorage.removeItem(
+          'otp_sent'
         );
+
+        // =========================
+        // 💳 CARD FLOW
+        // =========================
+
+        if (
+          location.state?.from === 'card' &&
+          cardData
+        ) {
+
+          await api.post(
+            '/billing/card',
+            cardData
+          );
+
+          toast.success(
+            'Card saved successfully',
+            {
+              className:
+                'kasuku-toast',
+              icon: '💳',
+            }
+          );
+
+          navigate(
+            '/settings/card'
+          );
+
+          return;
+        }
 
         toast.success(
-          'Card saved successfully',
+          'Verification successful',
           {
             className:
               'kasuku-toast',
-            icon: '💳',
-          },
+            icon: '✅',
+          }
         );
 
-        navigate('/settings/card');
+        // =========================
+        // 🚀 NORMAL LOGIN
+        // =========================
 
-        return;
+        window.location.href =
+  '/dashboard';
+
+      } catch (err) {
+
+        console.error(err);
+
+        toast.error(
+          'Invalid or expired code',
+          {
+            className:
+              'kasuku-toast',
+            icon: '❌',
+          }
+        );
+
+        setCode('');
+
+        setTimeout(() => {
+
+          inputRef.current?.focus();
+
+        }, 100);
+
+      } finally {
+
+        setLoading(false);
+
       }
-
-      toast.success(
-        'Verification successful',
-        {
-          className: 'kasuku-toast',
-          icon: '✅',
-        },
-      );
-
-    // =========================
-      // ✅ PAYMENT / DASHBOARD FLOW
-      // =========================
-
-      const redirectAfterLogin =
-        localStorage.getItem(
-          'redirectAfterLogin',
-        );
-
-      const selectedPlan =
-        localStorage.getItem(
-          'selectedPlan',
-        );
-
-      const selectedBilling =
-        localStorage.getItem(
-          'selectedBilling',
-        );
-
-      // ✅ ONLY NEW USERS FROM PRICING
-      if (
-        redirectAfterLogin ===
-          '/payment' &&
-        selectedPlan
-      ) {
-
-        localStorage.removeItem(
-          'redirectAfterLogin',
-        );
-
-        navigate(
-          `/payment?plan=${selectedPlan}&billing=${selectedBilling || 'monthly'}`
-        );
-
-        return;
-      }
-
-      // ✅ CLEAR OLD PAYMENT CACHE
-      localStorage.removeItem(
-        'redirectAfterLogin',
-      );
-
-      localStorage.removeItem(
-        'selectedPlan',
-      );
-
-      localStorage.removeItem(
-        'selectedBilling',
-      );
-
-      // ✅ EXISTING USERS
-      navigate('/dashboard');
-
-    } catch (err) {
-      console.error(err);
-
-      toast.error(
-        'Invalid or expired code',
-        {
-          className: 'kasuku-toast',
-          icon: '❌',
-        },
-      );
-
-      setCode('');
-
-      inputRef.current?.focus();
-
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   // =========================
-  // 🚀 AUTO SEND ON LOAD
+  // 🚀 AUTO SEND OTP
   // =========================
+
   useEffect(() => {
+
     const alreadySent =
       sessionStorage.getItem(
-        'otp_sent',
+        'otp_sent'
       );
 
-    if (email && !alreadySent) {
+    if (
+      email &&
+      !alreadySent
+    ) {
+
       sendOtp();
 
       sessionStorage.setItem(
         'otp_sent',
-        'true',
+        'true'
       );
     }
+
   }, []);
 
   // =========================
-  // ⏱ COOLDOWN TIMER
+  // ⏱ COOLDOWN
   // =========================
-  useEffect(() => {
-    if (cooldown <= 0) return;
 
-    const timer = setInterval(() => {
-      setCooldown((prev) => prev - 1);
-    }, 1000);
+  useEffect(() => {
+
+    if (cooldown <= 0)
+      return;
+
+    const timer =
+      setInterval(() => {
+
+        setCooldown(
+          (prev) => prev - 1
+        );
+
+      }, 1000);
 
     return () =>
       clearInterval(timer);
@@ -349,45 +410,60 @@ localStorage.setItem(
   }, [cooldown]);
 
   // =========================
-  // 🔢 INPUT HANDLER
+  // 🔢 INPUT
   // =========================
+
   const handleChange = (
-    value: string,
+    value: string
   ) => {
 
-    const clean = value
-      .replace(/\D/g, '')
-      .slice(0, 6);
+    const clean =
+      value
+        .replace(/\D/g, '')
+        .slice(0, 6);
 
     setCode(clean);
 
-    if (clean.length === 6) {
+    if (
+      clean.length === 6
+    ) {
+
       handleVerify(clean);
+
     }
   };
 
   // =========================
-  // 📋 PASTE HANDLER
+  // 📋 PASTE
   // =========================
+
   const handlePaste = (
-    e: React.ClipboardEvent<HTMLInputElement>,
+    e: React.ClipboardEvent<HTMLInputElement>
   ) => {
 
     const pasted =
       e.clipboardData
         .getData('text')
-        .replace(/\D/g, '');
+        .replace(/\D/g, '')
+        .slice(0, 6);
 
-    if (pasted.length === 6) {
+    if (
+      pasted.length === 6
+    ) {
+
       setCode(pasted);
 
       handleVerify(pasted);
+
     }
   };
 
   return (
+
     <div style={styles.page}>
+
       <div style={styles.card}>
+
         <img
           src={logo}
           alt="Kasuku"
@@ -399,10 +475,14 @@ localStorage.setItem(
         </h2>
 
         <p style={styles.subtitle}>
-          Code sent to <br />
+          Code sent to
+          <br />
+
           <span
             style={{
               color: '#fff',
+              wordBreak:
+                'break-word',
             }}
           >
             {email}
@@ -414,7 +494,7 @@ localStorage.setItem(
           value={code}
           onChange={(e) =>
             handleChange(
-              e.target.value,
+              e.target.value
             )
           }
           onPaste={handlePaste}
@@ -422,6 +502,7 @@ localStorage.setItem(
           autoComplete="one-time-code"
           maxLength={6}
           placeholder="••••••"
+          disabled={loading}
           style={styles.input}
         />
 
@@ -429,9 +510,11 @@ localStorage.setItem(
           disabled
           style={styles.btn}
         >
+
           {loading
             ? 'Verifying...'
             : 'Enter Code'}
+
         </button>
 
         <button
@@ -442,29 +525,37 @@ localStorage.setItem(
           }
           style={styles.resend}
         >
+
           {cooldown > 0
             ? `Resend in ${cooldown}s`
             : sending
             ? 'Sending...'
             : 'Resend Code'}
+
         </button>
+
       </div>
+
     </div>
   );
 }
 
 const styles = {
+
   page: {
-    height: '100vh',
+    minHeight: '100vh',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+    boxSizing: 'border-box',
     background:
-      'radial-gradient(circle at center, #0f0f1a 0%, #000 100%)',
+      'radial-gradient(circle at center,#0f0f1a 0%,#000 100%)',
   },
 
   card: {
-    width: 360,
+    width: '100%',
+    maxWidth: 360,
     padding: 40,
     borderRadius: 24,
     background:
@@ -473,6 +564,7 @@ const styles = {
     border:
       '1px solid rgba(255,255,255,0.1)',
     textAlign: 'center',
+    boxSizing: 'border-box',
     boxShadow:
       '0 0 60px rgba(124,58,237,0.35)',
   },
@@ -492,6 +584,7 @@ const styles = {
     color: '#aaa',
     fontSize: 14,
     marginBottom: 25,
+    lineHeight: 1.6,
   },
 
   input: {
@@ -505,6 +598,9 @@ const styles = {
     fontSize: 22,
     letterSpacing: 8,
     outline: 'none',
+    boxSizing: 'border-box',
+    WebkitAppearance: 'none',
+    fontFamily: 'inherit',
   },
 
   btn: {

@@ -4,13 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../assets/kasuku-logo.png';
 
 export default function Profile() {
+
   const navigate = useNavigate();
+
+  const [saving, setSaving] =
+    useState(false);
 
   const [user, setUser] = useState<any>({
     artistName: '',
     email: '',
     bio: '',
     avatar: '',
+
     website: '',
     instagram: '',
     twitter: '',
@@ -26,335 +31,335 @@ export default function Profile() {
     referralCode: '',
     referralEnabled: true,
 
-    plan: '',
-    subscriptionActive: false,
+    plan: 'free',
+
+    subscriptionActive: true,
+
+    role: '',
   });
 
-  const [saving, setSaving] = useState(false);
+  const [referralLink,
+    setReferralLink] =
+    useState('');
 
-  // 🔥 LIVE SEARCH
-  const [artistSearch, setArtistSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searching, setSearching] = useState(false);
+  // =========================
+  // NORMALIZE USER
+  // =========================
 
-  // 🔥 REFERRAL
-  const [refLink, setRefLink] = useState('');
+  const normalizeUser = (
+    data: any
+  ) => {
 
-  // =====================
+    return {
+
+      ...data,
+
+     plan:
+  String(
+    data?.plan || 'free'
+  ).toLowerCase(),
+
+      isAdmin:
+        data?.role === 'admin',
+
+      subscriptionActive:
+        true,
+
+      referralEnabled:
+        data?.referralEnabled !== false,
+
+      avatar:
+        data?.avatar || '',
+
+    };
+
+  };
+
+  // =========================
   // LOAD PROFILE
-  // =====================
+  // =========================
+
   const loadProfile = async () => {
+
     try {
 
-      const res = await api.get('/users/me');
+      const res =
+        await api.get('/users/me');
 
-      setUser(res.data);
+      const normalized =
+        normalizeUser(
+          res.data
+        );
+
+      setUser(normalized);
 
       localStorage.setItem(
         'user',
-        JSON.stringify({
-          ...JSON.parse(
-            localStorage.getItem('user') || '{}'
-          ),
+        JSON.stringify(
+          normalized
+        )
+      );
 
-          ...res.data,
+      localStorage.setItem(
+        'plan',
+        String(
+          normalized.plan
+        )
+      );
 
-          avatar: res.data.avatar,
-          image: res.data.avatar,
-
-          username:
-            res.data.artistName ||
-            res.data.username,
-        })
+      localStorage.setItem(
+        'subscriptionActive',
+        'true'
       );
 
       window.dispatchEvent(
-        new Event('storage')
+        new Event(
+          'authChanged'
+        )
       );
 
-      if (res.data?.referralCode) {
+      if (
+        normalized?.referralCode
+      ) {
 
-        setRefLink(
-          `${window.location.origin}/auth?ref=${res.data.referralCode}`
+        setReferralLink(
+          `${window.location.origin}/auth?ref=${normalized.referralCode}`
         );
+
       }
 
     } catch (err) {
 
       console.error(err);
+
     }
+
   };
 
   useEffect(() => {
+
     loadProfile();
+
   }, []);
 
-  // =====================
+  // =========================
   // AUTO SAVE
-  // =====================
+  // =========================
+
   useEffect(() => {
 
-    if (!user.email) return;
+    if (!user?.email) return;
 
-    const timeout = setTimeout(async () => {
+    const timeout =
+      setTimeout(async () => {
+
+        try {
+
+          setSaving(true);
+
+          await api.post(
+            '/users/update',
+            user
+          );
+
+          localStorage.setItem(
+            'user',
+            JSON.stringify(
+              user
+            )
+          );
+
+          window.dispatchEvent(
+            new Event(
+              'authChanged'
+            )
+          );
+
+        } catch (err) {
+
+          console.error(err);
+
+        } finally {
+
+          setSaving(false);
+
+        }
+
+      }, 1200);
+
+    return () =>
+      clearTimeout(timeout);
+
+  }, [user]);
+
+  // =========================
+  // AVATAR UPLOAD
+  // =========================
+
+  const uploadAvatar =
+    async (e: any) => {
+
+      const file =
+        e.target.files?.[0];
+
+      if (!file) return;
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        'file',
+        file
+      );
 
       try {
 
-        setSaving(true);
+        const res =
+          await api.post(
+            '/users/upload-avatar',
+            formData
+          );
 
-        await api.post(
-          '/users/update',
-          user
+        const avatarUrl =
+          res.data?.url || '';
+
+        const updatedUser = {
+
+          ...user,
+
+          avatar: avatarUrl,
+
+        };
+
+        setUser(
+          updatedUser
         );
 
         localStorage.setItem(
           'user',
-          JSON.stringify({
-            ...JSON.parse(
-              localStorage.getItem('user') || '{}'
-            ),
-
-            ...user,
-
-            avatar: user.avatar,
-            image: user.avatar,
-
-            username:
-              user.artistName ||
-              user.username,
-          })
+          JSON.stringify(
+            updatedUser
+          )
         );
 
         window.dispatchEvent(
-          new Event('storage')
+          new Event(
+            'authChanged'
+          )
         );
 
       } catch (err) {
 
         console.error(err);
 
-      } finally {
+        alert(
+          'Upload failed ❌'
+        );
 
-        setSaving(false);
       }
 
-    }, 1200);
+    };
 
-    return () => clearTimeout(timeout);
+  // =========================
+  // TOGGLE REFERRAL
+  // =========================
 
-  }, [user]);
-
-  // =====================
-  // 🔥 LIVE SPOTIFY SEARCH
-  // =====================
-  useEffect(() => {
-
-    const searchArtists = async () => {
-
-      if (!artistSearch.trim()) {
-
-        setSearchResults([]);
-        setShowSearch(false);
-
-        return;
-      }
+  const toggleReferral =
+    async () => {
 
       try {
 
-        setSearching(true);
+        const updated = {
 
-        const res = await api.get(
-          `/spotify/search?name=${encodeURIComponent(
-            artistSearch
-          )}`
+          ...user,
+
+          referralEnabled:
+            !user.referralEnabled,
+
+        };
+
+        setUser(updated);
+
+        await api.post(
+          '/users/update',
+          updated
         );
-
-        setSearchResults(
-          res.data || []
-        );
-
-        setShowSearch(true);
 
       } catch (err) {
 
         console.error(err);
 
-        setSearchResults([]);
-        setShowSearch(false);
-
-      } finally {
-
-        setSearching(false);
       }
+
     };
 
-    const timeout = setTimeout(() => {
-      searchArtists();
-    }, 400);
-
-    return () => clearTimeout(timeout);
-
-  }, [artistSearch]);
-
-  // =====================
-  // AVATAR
-  // =====================
-  const uploadAvatar = async (e: any) => {
-
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    const formData = new FormData();
-
-    formData.append('file', file);
-
-    try {
-
-      const res = await api.post(
-        '/users/upload-avatar',
-        formData
-      );
-
-      const updated = {
-        ...user,
-        avatar: res.data.url,
-      };
-
-      // 🔥 UPDATE UI INSTANTLY
-      setUser(updated);
-
-      // 🔥 UPDATE STORAGE
-      localStorage.setItem(
-        'user',
-        JSON.stringify({
-          ...JSON.parse(
-            localStorage.getItem('user') || '{}'
-          ),
-
-          ...updated,
-
-          avatar: updated.avatar,
-          image: updated.avatar,
-
-          username:
-            updated.artistName ||
-            updated.username,
-        })
-      );
-
-      // 🔥 FORCE SIDEBAR UPDATE
-      window.dispatchEvent(
-        new Event('storage')
-      );
-
-    } catch {
-
-      alert('Upload failed ❌');
-    }
-  };
-
-  // =====================
-  // SELECT PROFILE
-  // =====================
-  const selectArtistProfile = (
-    artist: any
-  ) => {
-
-    const updatedUser = {
-
-      ...user,
-
-      artistName:
-        artist.name || '',
-
-      spotifyArtistId:
-        artist.spotifyId || '',
-
-      spotifyUrl:
-        artist.spotifyId
-          ? `https://open.spotify.com/artist/${artist.spotifyId}`
-          : '',
-    };
-
-    setUser(updatedUser);
-
-    setArtistSearch(
-      artist.name
-    );
-
-    setShowSearch(false);
-
-    // 🔥 SAVE IMMEDIATELY
-    localStorage.setItem(
-      'user',
-      JSON.stringify({
-        ...JSON.parse(
-          localStorage.getItem('user') || '{}'
-        ),
-
-        ...updatedUser,
-
-        avatar: updatedUser.avatar,
-        image: updatedUser.avatar,
-
-        username:
-          updatedUser.artistName,
-      })
-    );
-
-    window.dispatchEvent(
-      new Event('storage')
-    );
-  };
-
-  // =====================
-  // SHARE REF LINK
-  // =====================
-  const handleShare = async () => {
-
-    if (!refLink) return;
-
-    if (navigator.share) {
-
-      await navigator.share({
-        title: 'Join Kasuku',
-
-        text:
-          'Get FREE 1 year subscription 🎧',
-
-        url: refLink,
-      });
-
-    } else {
-
-      window.open(
-        `https://wa.me/?text=${encodeURIComponent(
-          refLink
-        )}`
-      );
-    }
-  };
-
-  // =====================
+  // =========================
   // COPY REF LINK
-  // =====================
-  const handleCopy = async () => {
+  // =========================
 
-    if (!refLink) return;
+  const copyReferral =
+    async () => {
 
-    await navigator.clipboard.writeText(
-      refLink
-    );
+      if (
+        !referralLink
+      )
+        return;
 
-    alert('Link copied 🔥');
-  };
+      await navigator.clipboard.writeText(
+        referralLink
+      );
+
+      alert(
+        'Referral link copied ✅'
+      );
+
+    };
+
+  // =========================
+  // PLAN LABEL
+  // =========================
+const getPlanName = () => {
+
+  const plan =
+    String(
+      user?.plan || 'free'
+    ).toLowerCase();
+
+  if (plan === 'pro') {
+    return 'PRO';
+  }
+
+  if (plan === 'artist') {
+    return 'ARTIST';
+  }
+
+  if (plan === 'solo') {
+    return 'SOLO';
+  }
+
+  return 'FREE';
+
+};
+
+  // =========================
+  // AVATAR URL
+  // =========================
+
+  const avatarSrc =
+    user?.avatar
+      ? user.avatar.startsWith(
+          'http'
+        )
+        ? user.avatar
+        : `https://kasuku-backend.onrender.com${user.avatar}`
+      : 'https://via.placeholder.com/100';
 
   return (
+
     <div style={styles.page}>
 
       {/* HEADER */}
+
       <div style={styles.header}>
 
         <img
@@ -368,66 +373,134 @@ export default function Profile() {
 
       </div>
 
-      {/* REFERRAL */}
-      {user.referralEnabled && (
-
-        <div style={styles.refBox}>
-
-          <div style={{ fontWeight: 'bold' }}>
-            🎁 Refer & Earn
-          </div>
-
-          <div
-            style={{
-              fontSize: 12,
-              color: '#aaa',
-            }}
-          >
-            FREE 1 year subscription
-          </div>
-
-          <input
-            value={
-              refLink || 'Generating...'
-            }
-            readOnly
-            style={styles.refInput}
-          />
-
-          <div
-            style={{
-              display: 'flex',
-              gap: 6,
-            }}
-          >
-
-            <button
-              style={styles.smallBtn}
-              onClick={handleShare}
-            >
-              Share
-            </button>
-
-            <button
-              style={styles.smallBtnOutline}
-              onClick={handleCopy}
-            >
-              Copy
-            </button>
-
-          </div>
-
-        </div>
-      )}
-
       <div style={styles.container}>
 
+        {/* REFERRAL */}
+
+        {user?.referralEnabled && (
+
+          <div style={styles.card}>
+
+            <div
+              style={
+                styles.referralTop
+              }
+            >
+
+              <div>
+
+                <h2>
+                  🎁 Referral System
+                </h2>
+
+                <p
+                  style={{
+                    color:
+                      '#888',
+
+                    fontSize: 13,
+                  }}
+                >
+                  Invite new users and get FREE 1 year trial
+                </p>
+
+              </div>
+
+              {/* ✅ ADMIN ONLY */}
+
+              {user?.role ===
+                'admin' && (
+
+                <button
+                  onClick={
+                    toggleReferral
+                  }
+                  style={{
+                    ...styles.toggleBtn,
+
+                    background:
+                      user?.referralEnabled
+                        ? 'linear-gradient(90deg,#ff003c,#7c3aed)'
+                        : 'linear-gradient(90deg,#00c853,#00ff99)',
+                  }}
+                >
+
+                  {user?.referralEnabled
+                    ? 'Disable'
+                    : 'Enable'}
+
+                </button>
+
+              )}
+
+            </div>
+
+            <input
+              value={
+                referralLink
+              }
+              readOnly
+              style={
+                styles.input
+              }
+            />
+
+            <div
+              style={{
+                display:
+                  'flex',
+
+                gap: 10,
+
+                flexWrap:
+                  'wrap',
+
+                marginTop: 12,
+              }}
+            >
+
+              <button
+                style={
+                  styles.copyBtn
+                }
+                onClick={
+                  copyReferral
+                }
+              >
+                Copy Link
+              </button>
+
+              <button
+                style={
+                  styles.shareBtn
+                }
+                onClick={() => {
+
+                  window.open(
+                    `https://wa.me/?text=${encodeURIComponent(referralLink)}`
+                  );
+
+                }}
+              >
+                Share
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
+
         {/* PROFILE */}
+
         <div style={styles.card}>
 
-          <h2>Artist Profile</h2>
+          <h2>
+            Artist Profile
+          </h2>
 
           {/* PLAN */}
+
           <div style={styles.planBox}>
 
             <div>
@@ -437,9 +510,7 @@ export default function Profile() {
               </div>
 
               <div style={styles.planValue}>
-                {user.plan
-                  ? user.plan.toUpperCase()
-                  : 'FREE'}
+                {getPlanName()}
               </div>
 
             </div>
@@ -449,44 +520,47 @@ export default function Profile() {
                 ...styles.statusBadge,
 
                 background:
-                  user.subscriptionActive
-                    ? 'rgba(0,255,120,0.15)'
-                    : 'rgba(255,0,60,0.15)',
+                  'rgba(0,255,120,0.15)',
 
                 color:
-                  user.subscriptionActive
-                    ? '#00ff99'
-                    : '#ff4d6d',
+                  '#00ff99',
               }}
             >
-              {user.subscriptionActive
-                ? 'ACTIVE'
-                : 'INACTIVE'}
+              ACTIVE
             </div>
 
           </div>
 
           {/* AVATAR */}
+
           <div style={styles.avatarBox}>
 
             <img
               src={
-  user.avatar
-    ? `https://kasuku-backend.onrender.com${user.avatar}`
-    : 'https://via.placeholder.com/100'
-}
-              style={styles.avatar}
+                avatarSrc
+              }
+              style={
+                styles.avatar
+              }
             />
 
-            <label style={styles.uploadBtn}>
+            <label
+              style={
+                styles.uploadBtn
+              }
+            >
 
               Upload Image
 
               <input
                 type="file"
-                onChange={uploadAvatar}
+                accept="image/*"
+                onChange={
+                  uploadAvatar
+                }
                 style={{
-                  display: 'none',
+                  display:
+                    'none',
                 }}
               />
 
@@ -494,41 +568,67 @@ export default function Profile() {
 
           </div>
 
+          {/* INPUTS */}
+
           <input
-            style={styles.input}
-            value={user.artistName || ''}
+            style={
+              styles.input
+            }
+            value={
+              user.artistName ||
+              ''
+            }
             placeholder="Artist Name"
             onChange={(e) =>
               setUser({
                 ...user,
+
                 artistName:
-                  e.target.value,
+                  e.target
+                    .value,
               })
             }
           />
 
           <input
-            style={styles.input}
-            value={user.email || ''}
+            style={
+              styles.input
+            }
+            value={
+              user.email ||
+              ''
+            }
             disabled
           />
 
           <textarea
             style={{
               ...styles.input,
-              minHeight: 120,
+
+              minHeight:
+                120,
             }}
             placeholder="Artist Bio"
-            value={user.bio || ''}
+            value={
+              user.bio || ''
+            }
             onChange={(e) =>
               setUser({
                 ...user,
-                bio: e.target.value,
+
+                bio:
+                  e.target
+                    .value,
               })
             }
           />
 
-          <p style={{ color: '#888' }}>
+          <p
+            style={{
+              color:
+                '#888',
+            }}
+          >
             {saving
               ? 'Saving...'
               : 'Auto-saved'}
@@ -536,10 +636,13 @@ export default function Profile() {
 
         </div>
 
-        {/* SOCIALS */}
+        {/* SOCIAL LINKS */}
+
         <div style={styles.card}>
 
-          <h2>Social Links</h2>
+          <h2>
+            Social Links
+          </h2>
 
           {[
             'website',
@@ -550,14 +653,23 @@ export default function Profile() {
 
             <input
               key={field}
-              style={styles.input}
-              placeholder={field}
-              value={user[field] || ''}
+              style={
+                styles.input
+              }
+              placeholder={
+                field
+              }
+              value={
+                user[field] ||
+                ''
+              }
               onChange={(e) =>
                 setUser({
                   ...user,
+
                   [field]:
-                    e.target.value,
+                    e.target
+                      .value,
                 })
               }
             />
@@ -567,107 +679,12 @@ export default function Profile() {
         </div>
 
         {/* PLATFORM IDS */}
+
         <div style={styles.card}>
 
           <h2>
             Platform Artist IDs
           </h2>
-
-          {/* 🔥 LIVE SEARCH */}
-          <input
-            style={styles.input}
-            placeholder="Search Spotify artist..."
-            value={artistSearch}
-            onChange={(e) =>
-              setArtistSearch(
-                e.target.value
-              )
-            }
-          />
-
-          {/* RESULTS */}
-          {showSearch && (
-
-            <div style={styles.searchResults}>
-
-              {searching ? (
-
-                <div style={styles.noResults}>
-                  Searching...
-                </div>
-
-              ) : searchResults.length > 0 ? (
-
-                searchResults.map(
-                  (artist, index) => (
-
-                    <div
-                      key={index}
-                      style={styles.resultCard}
-                      onClick={() =>
-                        selectArtistProfile(
-                          artist
-                        )
-                      }
-                    >
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                        }}
-                      >
-
-                        <img
-                          src={
-                            artist.image ||
-                            'https://via.placeholder.com/50'
-                          }
-                          style={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                          }}
-                        />
-
-                        <div>
-
-                          <div
-                            style={{
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            {artist.name}
-                          </div>
-
-                          <div
-                            style={{
-                              fontSize: 12,
-                              color: '#888',
-                            }}
-                          >
-                            Spotify Artist
-                          </div>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-                  )
-                )
-
-              ) : (
-
-                <div style={styles.noResults}>
-                  No profile found
-                </div>
-              )}
-
-            </div>
-          )}
 
           {[
             'spotifyArtistId',
@@ -680,14 +697,23 @@ export default function Profile() {
 
             <input
               key={field}
-              style={styles.input}
-              placeholder={field}
-              value={user[field] || ''}
+              style={
+                styles.input
+              }
+              placeholder={
+                field
+              }
+              value={
+                user[field] ||
+                ''
+              }
               onChange={(e) =>
                 setUser({
                   ...user,
+
                   [field]:
-                    e.target.value,
+                    e.target
+                      .value,
                 })
               }
             />
@@ -697,12 +723,21 @@ export default function Profile() {
         </div>
 
         {/* COLLAB */}
-        <div style={styles.cardGlow}>
 
-          <h2>Collaborations</h2>
+        <div
+          style={
+            styles.cardGlow
+          }
+        >
+
+          <h2>
+            Collaborations
+          </h2>
 
           <button
-            style={styles.mainBtn}
+            style={
+              styles.mainBtn
+            }
             onClick={() =>
               navigate(
                 '/collaborators'
@@ -715,18 +750,22 @@ export default function Profile() {
         </div>
 
       </div>
+
     </div>
+
   );
+
 }
 
-// 🎨 STYLES
 const styles: any = {
+
   page: {
     minHeight: '100vh',
     background:
-      'radial-gradient(circle at top, #1a002b, #020617, #000)',
+      'radial-gradient(circle at top,#1a002b,#020617,#000)',
     color: '#fff',
-    position: 'relative',
+    width: '100%',
+    overflowX: 'hidden',
   },
 
   header: {
@@ -735,27 +774,33 @@ const styles: any = {
     padding: 20,
     borderBottom:
       '1px solid rgba(255,255,255,0.06)',
+    flexWrap: 'wrap',
+    gap: 10,
   },
 
   logo: {
     width: 50,
-    marginRight: 10,
   },
 
   title: {
-    fontSize: 22,
+    fontSize:
+      'clamp(22px,4vw,30px)',
     fontWeight: 'bold',
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
-    WebkitBackgroundClip: 'text',
+    WebkitBackgroundClip:
+      'text',
     WebkitTextFillColor:
       'transparent',
   },
 
   container: {
-    maxWidth: 750,
-    margin: '40px auto',
+    width: '100%',
+    maxWidth: 850,
+    margin: '0 auto',
     padding: 20,
+    boxSizing:
+      'border-box',
   },
 
   card: {
@@ -766,7 +811,8 @@ const styles: any = {
     marginBottom: 20,
     border:
       '1px solid rgba(255,255,255,0.06)',
-    backdropFilter: 'blur(20px)',
+    backdropFilter:
+      'blur(20px)',
   },
 
   cardGlow: {
@@ -784,11 +830,14 @@ const styles: any = {
     padding: 14,
     marginBottom: 12,
     borderRadius: 12,
-    background: '#0f0f0f',
+    background:
+      '#0f0f0f',
     border:
       '1px solid rgba(255,255,255,0.08)',
     color: '#fff',
     outline: 'none',
+    boxSizing:
+      'border-box',
   },
 
   avatar: {
@@ -805,6 +854,7 @@ const styles: any = {
     display: 'flex',
     alignItems: 'center',
     gap: 16,
+    flexWrap: 'wrap',
   },
 
   uploadBtn: {
@@ -843,13 +893,16 @@ const styles: any = {
     justifyContent:
       'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
   },
 
   planLabel: {
     fontSize: 12,
     color: '#aaa',
     marginBottom: 4,
-    textTransform: 'uppercase',
+    textTransform:
+      'uppercase',
     letterSpacing: 1,
   },
 
@@ -867,79 +920,51 @@ const styles: any = {
     letterSpacing: 1,
   },
 
-  refBox: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 240,
-    background:
-      'linear-gradient(135deg,#140014,#1f0033)',
-    padding: 12,
-    borderRadius: 14,
-    boxShadow:
-      '0 0 25px rgba(124,58,237,0.35)',
+  referralTop: {
+    display: 'flex',
+    justifyContent:
+      'space-between',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 16,
+    flexWrap: 'wrap',
   },
 
-  refInput: {
-    width: '100%',
-    padding: 8,
-    margin: '8px 0',
-    fontSize: 11,
-    background: '#0f0f0f',
-    border:
-      '1px solid rgba(255,255,255,0.08)',
+  toggleBtn: {
+    border: 'none',
     color: '#fff',
-    borderRadius: 8,
+    padding:
+      '10px 16px',
+    borderRadius: 10,
+    cursor: 'pointer',
+    fontWeight: 'bold',
   },
 
-  smallBtn: {
+  copyBtn: {
     flex: 1,
-    padding: 8,
-    borderRadius: 8,
+    minWidth: 120,
+    padding: 12,
+    borderRadius: 10,
     border: 'none',
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
     color: '#fff',
-    fontSize: 12,
+    fontWeight: 'bold',
     cursor: 'pointer',
   },
 
-  smallBtnOutline: {
+  shareBtn: {
     flex: 1,
-    padding: 8,
-    borderRadius: 8,
+    minWidth: 120,
+    padding: 12,
+    borderRadius: 10,
     border:
-      '1px solid rgba(255,255,255,0.08)',
-    background: '#0f0f0f',
+      '1px solid rgba(255,255,255,0.1)',
+    background:
+      '#111',
     color: '#fff',
-    fontSize: 12,
+    fontWeight: 'bold',
     cursor: 'pointer',
   },
 
-  searchResults: {
-    marginBottom: 16,
-  },
-
-  resultCard: {
-    padding: 14,
-    borderRadius: 12,
-    background:
-      'rgba(255,255,255,0.04)',
-    marginBottom: 10,
-    cursor: 'pointer',
-    border:
-      '1px solid rgba(255,255,255,0.06)',
-  },
-
-  noResults: {
-    padding: 14,
-    borderRadius: 12,
-    background:
-      'rgba(255,0,60,0.08)',
-    border:
-      '1px solid rgba(255,0,60,0.2)',
-    color: '#ff7b9c',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
 };

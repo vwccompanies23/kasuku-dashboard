@@ -1,10 +1,28 @@
 import logo from '../assets/kasuku-logo.png';
 
+import {
+  useLanguage,
+} from '../LanguageContext';
+
+import translations
+from '../translations';
+
 export default function Help() {
+
+  const {
+    lang,
+  } = useLanguage();
+
+  const t =
+    translations?.[lang] ||
+    translations.en;
+
   return (
+
     <div style={styles.page}>
 
       {/* HERO */}
+
       <div style={styles.hero}>
 
         <img
@@ -14,101 +32,171 @@ export default function Help() {
         />
 
         <h1 style={styles.title}>
-          Help Center
+          {t?.helpCenter ||
+            'Help Center'}
         </h1>
 
         <p style={styles.subtitle}>
-          Welcome to Kasuku Support. We are here to help artists,
-          labels, creators, and teams manage music distribution,
-          releases, payments, royalties, subscriptions, and platform access.
+          {t?.helpSubtitle ||
+            `Welcome to Kasuku Support. We are here to help artists,
+            labels, creators, and teams manage music distribution,
+            releases, payments, royalties, subscriptions,
+            and platform access.`}
         </p>
 
       </div>
 
       {/* CONTENT */}
+
       <div style={styles.container}>
 
         {/* ACCOUNT */}
+
         <div style={styles.card}>
 
           <h2 style={styles.heading}>
-            Account & Login Support
+            {t?.accountSupport ||
+              'Account & Login Support'}
           </h2>
 
           <p style={styles.text}>
-            Having trouble logging in, verifying your account,
-            receiving OTP codes, or accessing your dashboard?
-            Our support team can help restore account access
-            and solve authentication issues quickly.
+            {t?.accountSupportText ||
+              `Having trouble logging in, verifying your account,
+              receiving OTP codes, or accessing your dashboard?
+              Our support team can help restore account access
+              and solve authentication issues quickly.`}
           </p>
 
           <ul style={styles.list}>
-            <li>OTP verification issues</li>
-            <li>Password reset support</li>
-            <li>Account recovery assistance</li>
-            <li>Email verification problems</li>
-            <li>Dashboard access support</li>
+            <li>
+              {t?.otpIssues ||
+                'OTP verification issues'}
+            </li>
+
+            <li>
+              {t?.passwordReset ||
+                'Password reset support'}
+            </li>
+
+            <li>
+              {t?.accountRecovery ||
+                'Account recovery assistance'}
+            </li>
+
+            <li>
+              {t?.emailVerification ||
+                'Email verification problems'}
+            </li>
+
+            <li>
+              {t?.dashboardSupport ||
+                'Dashboard access support'}
+            </li>
           </ul>
 
         </div>
 
         {/* MUSIC */}
+
         <div style={styles.card}>
 
           <h2 style={styles.heading}>
-            Music Distribution Help
+            {t?.distributionHelp ||
+              'Music Distribution Help'}
           </h2>
 
           <p style={styles.text}>
-            Kasuku helps artists distribute music to major streaming
-            platforms worldwide. If your release is pending, rejected,
-            missing artwork, or delayed, contact support for assistance.
+            {t?.distributionHelpText ||
+              `Kasuku helps artists distribute music to major streaming
+              platforms worldwide. If your release is pending,
+              rejected, missing artwork, or delayed,
+              contact support for assistance.`}
           </p>
 
           <ul style={styles.list}>
-            <li>Spotify release issues</li>
-            <li>Apple Music delivery support</li>
-            <li>YouTube Content ID help</li>
-            <li>Metadata corrections</li>
-            <li>Artist profile linking</li>
-            <li>Royalty & analytics support</li>
+            <li>
+              Spotify release issues
+            </li>
+
+            <li>
+              Apple Music delivery support
+            </li>
+
+            <li>
+              YouTube Content ID help
+            </li>
+
+            <li>
+              Metadata corrections
+            </li>
+
+            <li>
+              Artist profile linking
+            </li>
+
+            <li>
+              Royalty & analytics support
+            </li>
           </ul>
 
         </div>
 
-        {/* PAYMENTS */}
+        {/* BILLING */}
+
         <div style={styles.card}>
 
           <h2 style={styles.heading}>
-            Billing & Subscription Support
+            {t?.billingSupport ||
+              'Billing & Subscription Support'}
           </h2>
 
           <p style={styles.text}>
-            Need help with subscriptions, Stripe payments,
-            yearly billing, invoices, or failed payments?
-            Kasuku support can assist you with all billing-related issues.
+            {t?.billingSupportText ||
+              `Need help with subscriptions,
+              Stripe payments, yearly billing,
+              invoices, or failed payments?
+              Kasuku support can assist you
+              with all billing-related issues.`}
           </p>
 
           <ul style={styles.list}>
-            <li>Monthly & yearly plans</li>
-            <li>Payment verification</li>
-            <li>Subscription activation</li>
-            <li>Invoice & billing questions</li>
-            <li>Card payment troubleshooting</li>
+            <li>
+              Monthly & yearly plans
+            </li>
+
+            <li>
+              Payment verification
+            </li>
+
+            <li>
+              Subscription activation
+            </li>
+
+            <li>
+              Invoice & billing questions
+            </li>
+
+            <li>
+              Card payment troubleshooting
+            </li>
           </ul>
 
         </div>
 
         {/* CONTACT */}
+
         <div style={styles.contactBox}>
 
           <h2 style={styles.contactTitle}>
-            Contact Kasuku Support
+            {t?.contactSupport ||
+              'Contact Kasuku Support'}
           </h2>
 
           <p style={styles.contactText}>
-            Our support team is available to assist artists and creators
-            with platform, distribution, and billing support requests.
+            {t?.contactSupportText ||
+              `Our support team is available to assist artists and creators
+              with platform, distribution,
+              and billing support requests.`}
           </p>
 
           <a
@@ -121,129 +209,261 @@ export default function Help() {
         </div>
 
       </div>
+
     </div>
+
   );
 }
 
-const styles: any = {
+const styles = {
 
   page: {
+
     minHeight: '100vh',
+
+    width: '100%',
+
+    overflowX: 'hidden',
+
     background:
       'radial-gradient(circle at top, #1a002b, #020617, #000)',
+
     color: '#fff',
+
     paddingBottom: 80,
+
+    boxSizing: 'border-box',
   },
 
   hero: {
+
     textAlign: 'center',
-    padding: '90px 20px 50px',
+
+    padding:
+      'clamp(70px, 10vw, 110px) 20px 50px',
+
+    width: '100%',
+
+    boxSizing: 'border-box',
   },
 
   logo: {
-    width: 95,
+
+    width:
+      'clamp(70px, 12vw, 100px)',
+
     marginBottom: 20,
+
     filter:
       'drop-shadow(0 0 25px rgba(124,58,237,0.8))',
   },
 
   title: {
-    fontSize: 'clamp(40px, 8vw, 64px)',
+
+    fontSize:
+      'clamp(38px, 8vw, 70px)',
+
     fontWeight: 'bold',
+
     marginBottom: 20,
+
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
+
     WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    lineHeight: '1.2',
+
+    WebkitTextFillColor:
+      'transparent',
+
+    lineHeight: 1.1,
+
+    wordBreak: 'break-word',
   },
 
   subtitle: {
-    maxWidth: 850,
+
+    maxWidth: 900,
+
     margin: '0 auto',
+
     color: '#d1d5db',
+
     lineHeight: 1.9,
-    fontSize: 18,
+
+    fontSize:
+      'clamp(15px, 2vw, 19px)',
+
+    padding:
+      '0 clamp(0px, 2vw, 20px)',
   },
 
   container: {
-    maxWidth: 1050,
+
+    width: '100%',
+
+    maxWidth: 1150,
+
     margin: '0 auto',
-    padding: '0 20px',
+
+    padding:
+      '0 clamp(16px, 3vw, 24px)',
+
+    boxSizing: 'border-box',
   },
 
   card: {
+
     background:
       'rgba(255,255,255,0.05)',
+
     border:
       '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 28,
-    padding: 35,
+
+    borderRadius:
+      'clamp(20px, 3vw, 30px)',
+
+    padding:
+      'clamp(22px, 4vw, 38px)',
+
     marginBottom: 28,
+
     backdropFilter: 'blur(20px)',
+
     boxShadow:
       '0 0 50px rgba(124,58,237,0.18)',
+
+    width: '100%',
+
+    boxSizing: 'border-box',
+
+    overflow: 'hidden',
   },
 
   heading: {
-    fontSize: 32,
+
+    fontSize:
+      'clamp(24px, 5vw, 36px)',
+
     marginBottom: 18,
+
     color: '#fff',
-    lineHeight: '1.3',
+
+    lineHeight: 1.3,
+
+    wordBreak: 'break-word',
   },
 
   text: {
+
     color: '#cfcfcf',
+
     lineHeight: 1.9,
-    fontSize: 16,
+
+    fontSize:
+      'clamp(14px, 2vw, 17px)',
+
     marginBottom: 22,
+
+    wordBreak: 'break-word',
   },
 
   list: {
+
     color: '#e5e5e5',
+
     paddingLeft: 24,
+
     lineHeight: 2,
-    fontSize: 16,
+
+    fontSize:
+      'clamp(14px, 2vw, 17px)',
+
+    wordBreak: 'break-word',
   },
 
   contactBox: {
-    marginTop: 40,
-    padding: 45,
-    borderRadius: 30,
+
+    marginTop: 45,
+
+    padding:
+      'clamp(28px, 5vw, 50px)',
+
+    borderRadius:
+      'clamp(22px, 3vw, 34px)',
+
     textAlign: 'center',
+
     background:
       'linear-gradient(135deg, rgba(255,0,60,0.12), rgba(124,58,237,0.18))',
+
     border:
       '1px solid rgba(255,255,255,0.08)',
+
     boxShadow:
       '0 0 60px rgba(124,58,237,0.28)',
+
+    overflow: 'hidden',
   },
 
   contactTitle: {
-    fontSize: 38,
+
+    fontSize:
+      'clamp(28px, 6vw, 44px)',
+
     marginBottom: 18,
+
     color: '#fff',
+
+    lineHeight: 1.2,
   },
 
   contactText: {
+
     color: '#d1d5db',
-    lineHeight: 1.8,
-    maxWidth: 700,
-    margin: '0 auto 28px',
-    fontSize: 17,
+
+    lineHeight: 1.9,
+
+    maxWidth: 760,
+
+    margin:
+      '0 auto 28px auto',
+
+    fontSize:
+      'clamp(15px, 2vw, 18px)',
+
+    wordBreak: 'break-word',
   },
 
   contactBtn: {
+
     display: 'inline-block',
-    padding: '16px 34px',
-    borderRadius: 16,
+
+    padding:
+      '16px 34px',
+
+    borderRadius: 18,
+
     textDecoration: 'none',
+
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
+
     color: '#fff',
+
     fontWeight: 'bold',
-    fontSize: 17,
+
+    fontSize:
+      'clamp(15px, 2vw, 18px)',
+
     boxShadow:
       '0 0 35px rgba(124,58,237,0.45)',
+
+    width: '100%',
+
+    maxWidth: 360,
+
+    wordBreak: 'break-word',
+
+    boxSizing: 'border-box',
   },
 };

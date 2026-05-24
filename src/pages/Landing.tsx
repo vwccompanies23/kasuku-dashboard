@@ -1,671 +1,1211 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {
+  useState,
+  useEffect,
+} from 'react';
+
+import {
+  useNavigate,
+} from 'react-router-dom';
+
 import { api } from '../api';
-import logoImg from '../assets/kasuku-logo.png';
+
+import logoImg
+from '../assets/kasuku-logo.png';
 
 import translations
 from '../translations';
 
 import {
-  useLanguage
+  useLanguage,
 } from '../LanguageContext';
 
 export default function Landing() {
-  const [plan, setPlan] = useState('monthly');
-  const [posts, setPosts] = useState([]);
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [pricing, setPricing] = useState<any>(null);
 
-  // ✅ ADDED
-  const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD');
+  //////////////////////////////////////////////////
+  // STATE
+  //////////////////////////////////////////////////
+
+  const [billing, setBilling] =
+    useState<'monthly' | 'yearly'>(
+      'monthly'
+    );
+
+  const [posts, setPosts] =
+    useState<any[]>([]);
+
+  const [selectedCard, setSelectedCard] =
+    useState<string | null>(null);
+
+  const [pricing, setPricing] =
+    useState<any>(null);
+
+  const [currency, setCurrency] =
+    useState(
+      localStorage.getItem(
+        'currency'
+      ) || 'USD'
+    );
+
+  //////////////////////////////////////////////////
+  // LANGUAGE
+  //////////////////////////////////////////////////
 
   const {
-  lang,
-  changeLang
-} = useLanguage();
+    lang,
+    changeLang,
+  } = useLanguage();
 
-const t =
-  translations[lang]
-  || translations.en;
+  const t =
+    translations?.[lang]
+    || translations.en;
 
-  const navigate = useNavigate();
+  //////////////////////////////////////////////////
+  // NAVIGATION
+  //////////////////////////////////////////////////
 
-  // ✅ FIXED API
+  const navigate =
+    useNavigate();
+
+  //////////////////////////////////////////////////
+  // POSTS
+  //////////////////////////////////////////////////
+
   useEffect(() => {
-    const fetchPosts = async () => {
+
+    const fetchPosts =
+      async () => {
+
       try {
-        const res = await api.get(`/posts?lang=${lang}`);
-        setPosts(res.data || []);
+
+        const res =
+          await api.get(
+            `/posts?lang=${lang}`
+          );
+
+        setPosts(
+          res.data || []
+        );
+
       } catch (err) {
-        console.error('Posts error:', err);
+
+        console.error(
+          'Posts error:',
+          err
+        );
+
       }
     };
 
     fetchPosts();
+
   }, [lang]);
 
-  // ✅ SAVE CURRENCY
+  //////////////////////////////////////////////////
+  // SAVE CURRENCY
+  //////////////////////////////////////////////////
+
   useEffect(() => {
-    localStorage.setItem('currency', currency);
+
+    localStorage.setItem(
+      'currency',
+      currency
+    );
+
   }, [currency]);
 
+  //////////////////////////////////////////////////
+  // LOAD PRICING
+  //////////////////////////////////////////////////
+
   useEffect(() => {
-  const loadPricing = async () => {
-    try {
-      const res = await api.get('/pricing');
 
-      const plans = res.data || [];
+    const loadPricing =
+      async () => {
 
-const formatted = {
-  soloMonthly:
-    plans.find(
-      (p) => p.plan === 'solo'
-    )?.monthlyPrice || 0,
+      try {
 
-  soloYearly:
-    plans.find(
-      (p) => p.plan === 'solo'
-    )?.yearlyPrice || 0,
+        const res =
+          await api.get(
+            '/pricing'
+          );
 
-  artistsMonthly:
-    plans.find(
-      (p) => p.plan === 'artists'
-    )?.monthlyPrice || 0,
+        const plans =
+          res.data || [];
 
-  artistsYearly:
-    plans.find(
-      (p) => p.plan === 'artists'
-    )?.yearlyPrice || 0,
+        const formatted = {
 
-  proMonthly:
-    plans.find(
-      (p) => p.plan === 'pro'
-    )?.monthlyPrice || 0,
+          soloMonthly:
+            plans.find(
+              (p: any) =>
+                p.plan === 'solo'
+            )?.monthlyPrice || 1.75,
 
-  proYearly:
-    plans.find(
-      (p) => p.plan === 'pro'
-    )?.yearlyPrice || 0,
-};
+          soloYearly:
+            plans.find(
+              (p: any) =>
+                p.plan === 'solo'
+            )?.yearlyPrice || 20.99,
 
-setPricing(formatted);
-    } catch (err) {
-      console.error('Pricing error:', err);
+          artistsMonthly:
+            plans.find(
+              (p: any) =>
+                p.plan === 'artists'
+            )?.monthlyPrice || 2.08,
+
+          artistsYearly:
+            plans.find(
+              (p: any) =>
+                p.plan === 'artists'
+            )?.yearlyPrice || 24.99,
+
+          proMonthly:
+            plans.find(
+              (p: any) =>
+                p.plan === 'pro'
+            )?.monthlyPrice || 5.08,
+
+          proYearly:
+            plans.find(
+              (p: any) =>
+                p.plan === 'pro'
+            )?.yearlyPrice || 60.99,
+        };
+
+        setPricing(
+          formatted
+        );
+
+      } catch (err) {
+
+        console.error(
+          'Pricing error:',
+          err
+        );
+
+      }
+    };
+
+    loadPricing();
+
+  }, []);
+
+  //////////////////////////////////////////////////
+  // CONVERT PRICE
+  //////////////////////////////////////////////////
+
+  const convertPrice = (
+    usd: number
+  ) => {
+
+    if (currency === 'USD') {
+      return `$${usd}`;
     }
-  };
 
-  loadPricing();
-}, []);
-
-  // ✅ CONVERTER
-  const convertPrice = (usd) => {
-    if (currency === 'USD') return `$${usd}`;
     const rate = 2800;
-    return `${(usd * rate).toLocaleString()} FC`;
+
+    return `${(
+      usd * rate
+    ).toLocaleString()} FC`;
   };
 
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  //////////////////////////////////////////////////
+  // SCROLL
+  //////////////////////////////////////////////////
+
+  const scrollTo = (
+    id: string
+  ) => {
+
+    document
+      .getElementById(id)
+      ?.scrollIntoView({
+        behavior: 'smooth',
+      });
   };
 
-  const handlePlanSelect = (planName) => {
-    const token = localStorage.getItem('token');
+  //////////////////////////////////////////////////
+  // PLAN FLOW FIXED
+  //////////////////////////////////////////////////
 
-    localStorage.setItem('selectedPlan', planName);
-    localStorage.setItem('redirectAfterLogin', '/payment');
+  const handlePlanSelect = (
+    planName: string
+  ) => {
 
-    if (!token) navigate('/signup');
-    else navigate('/payment');
+    //////////////////////////////////////////////////
+    // SAVE PLAN
+    //////////////////////////////////////////////////
+
+    localStorage.setItem(
+      'selectedPlan',
+      planName
+    );
+
+    //////////////////////////////////////////////////
+    // SAVE BILLING
+    //////////////////////////////////////////////////
+
+    localStorage.setItem(
+      'selectedBilling',
+      billing
+    );
+
+    //////////////////////////////////////////////////
+    // CHECK TOKEN
+    //////////////////////////////////////////////////
+
+    const token =
+      localStorage.getItem(
+        'token'
+      );
+
+    //////////////////////////////////////////////////
+    // NOT LOGGED IN
+    //////////////////////////////////////////////////
+
+    if (!token) {
+
+      navigate(
+        `/signup?plan=${planName}&billing=${billing}`
+      );
+
+      return;
+    }
+
+    //////////////////////////////////////////////////
+    // LOGGED IN
+    //////////////////////////////////////////////////
+
+    navigate(
+      `/payment?plan=${planName}&billing=${billing}`
+    );
   };
 
-  // 🔥 YOUR ORIGINAL CARD STYLE (UNCHANGED)
-  const getCardStyle = (type, featured = false) => {
-    const active = selectedCard === type;
+  //////////////////////////////////////////////////
+  // CARD STYLE
+  //////////////////////////////////////////////////
+
+  const getCardStyle = (
+    type: string,
+    featured = false
+  ) => {
+
+    const active =
+      selectedCard === type;
 
     return {
-      width: featured ? 320 : 300,
-      padding: 25,
-      borderRadius: 18,
+
+      width: '100%',
+
+      maxWidth:
+        featured
+          ? 340
+          : 320,
+
+      minHeight: 520,
+
+      padding: 28,
+
+      borderRadius: 24,
+
       cursor: 'pointer',
-      position: 'relative',
-      overflow: 'hidden',
-      transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+
+      position: 'relative' as const,
+
+      overflow: 'hidden' as const,
+
+      transition:
+        'all 0.35s ease',
+
       background: active
-        ? 'linear-gradient(135deg, rgba(255,0,60,0.2), rgba(124,58,237,0.2))'
-        : '#0a0a0a',
-      border: '1px solid rgba(255,255,255,0.08)',
+        ? 'linear-gradient(135deg, rgba(255,0,60,0.18), rgba(124,58,237,0.18))'
+        : 'rgba(10,10,10,0.95)',
+
+      border:
+        '1px solid rgba(255,255,255,0.08)',
+
       boxShadow: active
-        ? '0 0 30px rgba(255,0,60,0.6), 0 0 60px rgba(124,58,237,0.5)'
+        ? '0 0 30px rgba(255,0,60,0.4), 0 0 60px rgba(124,58,237,0.3)'
         : '0 0 0 transparent',
+
       transform: active
-        ? 'translateY(-14px) scale(1.06)'
-        : 'translateY(0) scale(1)',
-      willChange: 'transform',
+        ? 'translateY(-10px)'
+        : 'translateY(0)',
+
+      backdropFilter:
+        'blur(18px)',
+
+      boxSizing:
+        'border-box' as const,
     };
   };
 
+  //////////////////////////////////////////////////
+  // UI
+  //////////////////////////////////////////////////
+
   return (
+
     <div style={styles.container}>
 
       {/* NAVBAR */}
+
       <div style={styles.navbar}>
+
         <div style={styles.logoWrap}>
-          <img src={logoImg} style={styles.logoImg} />
-          <span style={styles.logoText}>KASUKU</span>
+
+          <img
+            src={logoImg}
+            alt="Kasuku"
+            style={styles.logoImg}
+          />
+
+          <span style={styles.logoText}>
+            KASUKU
+          </span>
+
         </div>
 
-        {/* 🌍 LANGUAGE (FIXED) */}
-        <select
-          value={lang}
-          onChange={(e) => {
-            const selected = e.target.value;
-            changeLang(selected);
-            localStorage.setItem('lang', selected);
-          }}
-          style={{
-            background: '#111',
-            color: '#fff',
-            border: '1px solid #333',
-            borderRadius: 6,
-            padding: '5px 8px',
-          }}
-        >
-          <option value="en">EN 🇺🇸a</option>
-          <option value="fr">FR 🇫🇷</option>
-          <option value="ksw">Kishwahili drc</option>
-          <option value="ar">AR 🇸🇦</option>
-          <option value="rn">Kirundi 🇧🇮</option>
-          <option value="lg">Luganda 🇺🇬</option>
-        </select>
+        <div style={styles.navRight}>
 
-        <div style={styles.navLinks}>
-          <span onClick={() => scrollTo('features')} style={styles.link}>{t.features}</span>
-          <span onClick={() => scrollTo('pricing')} style={styles.link}>{t.pricing}</span>
-          <a href="/login" style={styles.link}>{t.login}</a>
-          <a href="/signup" style={styles.ctaBtn}>Get Started</a>
+          {/* LANGUAGE */}
 
-          {/* 💰 CURRENCY */}
+          <select
+            value={lang}
+            onChange={(e) => {
+
+              const selected =
+                e.target.value;
+
+              changeLang(
+                selected
+              );
+
+              localStorage.setItem(
+                'lang',
+                selected
+              );
+            }}
+            style={styles.select}
+          >
+            <option value="en">
+              EN 🇺🇸
+            </option>
+
+            <option value="fr">
+              FR 🇫🇷
+            </option>
+
+            <option value="ksw">
+              Kiswahili 🇨🇩
+            </option>
+
+            <option value="ar">
+              العربية 🇸🇦
+            </option>
+
+            <option value="rn">
+              Kirundi 🇧🇮
+            </option>
+
+            <option value="lg">
+              Luganda 🇺🇬
+            </option>
+
+          </select>
+
+          {/* CURRENCY */}
+
           <select
             value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            style={{
-              background: '#111',
-              color: '#fff',
-              border: '1px solid #333',
-              borderRadius: 6,
-              padding: '5px 8px',
-            }}
+            onChange={(e) =>
+              setCurrency(
+                e.target.value
+              )
+            }
+            style={styles.select}
           >
-            <option value="USD">USD $</option>
-            <option value="CDF">CDF 🇨🇩</option>
+            <option value="USD">
+              USD $
+            </option>
+
+            <option value="CDF">
+              CDF 🇨🇩
+            </option>
+
           </select>
+
         </div>
+
       </div>
 
       {/* HERO */}
+
       <section style={styles.hero}>
+
         <h1 style={styles.heroTitle}>
-          <div>{t.distribute}</div>
-          <div style={styles.gradient}>{t.universe}</div>
+
+          <div>
+            {t.distribute}
+          </div>
+
+          <div style={styles.gradient}>
+            {t.universe}
+          </div>
+
         </h1>
 
         <p style={styles.heroSub}>
-          Spotify, Apple Music, YouTube & more — all in one place.
+          Spotify, Apple Music,
+          YouTube & more —
+          all in one place.
         </p>
 
         <div style={styles.heroBtns}>
-          <a href="/signup" style={styles.primaryBtn}>Start Now 🚀</a>
-          <button onClick={() => scrollTo('pricing')} style={styles.secondaryBtn}>
-           {t.viewPricing}
+
+          <button
+            onClick={() =>
+              navigate('/signup')
+            }
+            style={styles.primaryBtn}
+          >
+            {t.getStarted}
           </button>
+
+          <button
+            onClick={() =>
+              scrollTo(
+                'pricing'
+              )
+            }
+            style={styles.secondaryBtn}
+          >
+            {t.viewPricing}
+          </button>
+
         </div>
+
       </section>
 
       {/* PRICING */}
-      <section style={styles.pricing} id="pricing">
+
+      <section
+        style={styles.pricing}
+        id="pricing"
+      >
 
         <div style={styles.toggleWrap}>
+
           <div
             style={{
               ...styles.slider,
-              left: plan === 'monthly' ? '0%' : '50%',
+              left:
+                billing ===
+                'monthly'
+                  ? '0%'
+                  : '50%',
             }}
           />
-          <button onClick={() => setPlan('monthly')} style={styles.toggleText}>
-            Monthly
+
+          <button
+            onClick={() =>
+              setBilling(
+                'monthly'
+              )
+            }
+            style={styles.toggleText}
+          >
+            {t.monthly || 'Monthly'}
           </button>
-          <button onClick={() => setPlan('yearly')} style={styles.toggleText}>
-            Yearly
+
+          <button
+            onClick={() =>
+              setBilling(
+                'yearly'
+              )
+            }
+            style={styles.toggleText}
+          >
+            {t.yearly || 'Yearly'}
           </button>
+
         </div>
 
         <div style={styles.cards}>
 
           {/* SOLO */}
-          <div
-            style={getCardStyle('solo')}
-            onClick={() => setSelectedCard('solo')}
-            onMouseEnter={() => setSelectedCard('solo')}
-          >
-            <div style={styles.glowBorder}></div>
 
-            <div style={styles.icon}>🎤</div>
-            <h3>Solo Artist</h3>
-            <p style={styles.sub}>Perfect for independent artists</p>
+          <div
+            style={getCardStyle(
+              'solo'
+            )}
+            onMouseEnter={() =>
+              setSelectedCard(
+                'solo'
+              )
+            }
+          >
+
+            <div style={styles.icon}>
+              🎤
+            </div>
+
+            <h3>
+              {t.soloArtist
+                || 'Solo Artist'}
+            </h3>
+
+            <p style={styles.sub}>
+              {t.soloDesc
+                || 'Perfect for independent artists'}
+            </p>
 
             <h2 style={styles.price}>
+
               {convertPrice(
-              plan === 'monthly'
-              ? pricing?.soloMonthly || 1.75
-              : pricing?.soloYearly || 20.99,
+                billing ===
+                'monthly'
+                  ? pricing?.soloMonthly
+                  : pricing?.soloYearly
               )}
-              <span style={styles.month}>/month</span>
+
             </h2>
 
+            <p style={styles.month}>
+              {billing ===
+              'monthly'
+                ? '/month'
+                : '/year'}
+            </p>
+
             <ul style={styles.list}>
-              <li>✔ 1 Artist Profile</li>
-              <li>✔ Unlimited Releases</li>
-              <li>✔ All Platforms</li>
-              <li>✔ Basic Analytics</li>
+              <li>
+                ✔ 1 Artist Profile
+              </li>
+
+              <li>
+                ✔ Unlimited Releases
+              </li>
+
+              <li>
+                ✔ All Platforms
+              </li>
+
+              <li>
+                ✔ Basic Analytics
+              </li>
+
             </ul>
 
-            <button style={styles.cardBtn} onClick={() => handlePlanSelect('solo')}>
+            <button
+              style={styles.cardBtn}
+              onClick={() =>
+                handlePlanSelect(
+                  'solo'
+                )
+              }
+            >
               {t.getStarted}
             </button>
+
           </div>
 
           {/* ARTISTS */}
+
           <div
-            style={getCardStyle('artists', true)}
-            onClick={() => setSelectedCard('artists')}
-            onMouseEnter={() => setSelectedCard('artists')}
+            style={getCardStyle(
+              'artists',
+              true
+            )}
+            onMouseEnter={() =>
+              setSelectedCard(
+                'artists'
+              )
+            }
           >
-            <div style={styles.glowBorder}></div>
 
-            <div style={styles.badge}>Most Popular</div>
-            <div style={styles.icon}>🎸</div>
+            <div style={styles.badge}>
+              {t.popular
+                || 'Most Popular'}
+            </div>
 
-            <h3>Artists</h3>
-            <p style={styles.sub}>For bands and duos</p>
+            <div style={styles.icon}>
+              🎸
+            </div>
+
+            <h3>
+              Artists
+            </h3>
+
+            <p style={styles.sub}>
+              {t.bandDesc
+                || 'For bands and duos'}
+            </p>
 
             <h2 style={styles.price}>
+
               {convertPrice(
-             plan === 'monthly'
-            ? pricing?.artistsMonthly || 2.08
-            : pricing?.artistsYearly || 24.99,
-           )}
-              <span style={styles.month}>/month</span>
+                billing ===
+                'monthly'
+                  ? pricing?.artistsMonthly
+                  : pricing?.artistsYearly
+              )}
+
             </h2>
 
+            <p style={styles.month}>
+              {billing ===
+              'monthly'
+                ? '/month'
+                : '/year'}
+            </p>
+
             <ul style={styles.list}>
-              <li>✔ 2 Artist Profiles</li>
-              <li>✔ Unlimited Releases</li>
-              <li>✔ All Platforms</li>
-              <li>✔ Advanced Analytics</li>
-              <li>✔ Priority Support</li>
+
+              <li>
+                ✔ 2 Artist Profiles
+              </li>
+
+              <li>
+                ✔ Unlimited Releases
+              </li>
+
+              <li>
+                ✔ Advanced Analytics
+              </li>
+
+              <li>
+                ✔ Priority Support
+              </li>
+
             </ul>
 
-            <button style={styles.ctaBig} onClick={() => handlePlanSelect('artists')}>
-              Get Started
+            <button
+              style={styles.ctaBig}
+              onClick={() =>
+                handlePlanSelect(
+                  'artists'
+                )
+              }
+            >
+              {t.getStarted}
             </button>
+
           </div>
 
           {/* PRO */}
-          <div
-            style={getCardStyle('pro')}
-            onClick={() => setSelectedCard('pro')}
-            onMouseEnter={() => setSelectedCard('pro')}
-          >
-            <div style={styles.glowBorder}></div>
 
-            <div style={styles.icon}>🏢</div>
-            <h3>Pro</h3>
-            <p style={styles.sub}>For professionals & labels</p>
+          <div
+            style={getCardStyle(
+              'pro'
+            )}
+            onMouseEnter={() =>
+              setSelectedCard(
+                'pro'
+              )
+            }
+          >
+
+            <div style={styles.icon}>
+              🏢
+            </div>
+
+            <h3>
+              Pro
+            </h3>
+
+            <p style={styles.sub}>
+              {t.proDesc
+                || 'For labels & professionals'}
+            </p>
 
             <h2 style={styles.price}>
+
               {convertPrice(
-             plan === 'monthly'
-            ? pricing?.proMonthly || 5.08
-            : pricing?.proYearly || 60.99,
-             )}
-              <span style={styles.month}>/month</span>
+                billing ===
+                'monthly'
+                  ? pricing?.proMonthly
+                  : pricing?.proYearly
+              )}
+
             </h2>
 
+            <p style={styles.month}>
+              {billing ===
+              'monthly'
+                ? '/month'
+                : '/year'}
+            </p>
+
             <ul style={styles.list}>
-              <li>✔ 5+ Artist Profiles</li>
-              <li>✔ Unlimited Releases</li>
-              <li>✔ Premium Analytics</li>
-              <li>✔ Dedicated Manager</li>
+
+              <li>
+                ✔ 5+ Artist Profiles
+              </li>
+
+              <li>
+                ✔ Premium Analytics
+              </li>
+
+              <li>
+                ✔ Dedicated Manager
+              </li>
+
             </ul>
 
-            <button style={styles.cardBtn} onClick={() => handlePlanSelect('pro')}>
-              Get Started
+            <button
+              style={styles.cardBtn}
+              onClick={() =>
+                handlePlanSelect(
+                  'pro'
+                )
+              }
+            >
+              {t.getStarted}
             </button>
+
           </div>
 
         </div>
+
       </section>
 
       {/* POSTS */}
-      <div style={styles.feedSection}>
-        <h2 style={styles.feedTitle}>🔥 {t.atestUpdates}</h2>
 
-        {posts.length === 0 && <p style={{ opacity: 0.6 }}>No updates yet</p>}
+      <section style={styles.feedSection}>
+
+        <h2 style={styles.feedTitle}>
+          🔥 {t.latestUpdates || 'Latest Updates'}
+        </h2>
 
         <div style={styles.feedGrid}>
-  {posts.map(p => (
-    <div key={p.id} style={styles.postCard}>
 
-      {p.image && (
-        <img
-          src={p.image}
-          style={styles.postImageSmall}
-        />
-      )}
+          {posts.map((p: any) => (
 
-      <div style={styles.postContent}>
-        <p style={styles.postText}>{p.text}</p>
-      </div>
+            <div
+              key={p.id}
+              style={styles.postCard}
+            >
 
-    </div>
-  ))}
-</div>
-      </div>
+              {p.image && (
+
+                <img
+                  src={p.image}
+                  alt=""
+                  style={styles.postImageSmall}
+                />
+
+              )}
+
+              <div style={styles.postContent}>
+
+                <p style={styles.postText}>
+                  {p.text}
+                </p>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
 
       {/* FOOTER */}
-      <div style={styles.footer}>
-  <p>©️ 2026 Kasuku</p>
 
-  {/* TOP ROW */}
- <div style={styles.footerLinks}>
+      <footer style={styles.footer}>
 
-  <span onClick={() => navigate('/terms')} style={styles.link}>
-    Terms
+        <p style={styles.footerText}>
+          © 2026 Kasuku
+        </p>
+
+       <div style={styles.footerLinks}>
+
+  <span
+    onClick={() => navigate('/terms')}
+    style={styles.footerLink}
+  >
+    {t.terms || 'Terms'}
   </span>
 
-  <span onClick={() => navigate('/privacy')} style={styles.link}>
-    Privacy
+  <span
+    onClick={() => navigate('/privacy')}
+    style={styles.footerLink}
+  >
+    {t.privacy || 'Privacy'}
   </span>
 
-  <span onClick={() => navigate('/help')} style={styles.link}>
-    Help
+  <span
+    onClick={() => navigate('/help')}
+    style={styles.footerLink}
+  >
+    {t.help || 'Help'}
   </span>
 
-  <span onClick={() => navigate('/dmca')} style={styles.link}>
+  <span
+    onClick={() => navigate('/dmca')}
+    style={styles.footerLink}
+  >
     DMCA
   </span>
 
   <span
     onClick={() => navigate('/refund-policy')}
-    style={styles.link}
+    style={styles.footerLink}
   >
     Refund Policy
   </span>
 
   <span
     onClick={() => navigate('/community-guidelines')}
-    style={styles.link}
+    style={styles.footerLink}
   >
     Community
   </span>
 
   <span
     onClick={() => navigate('/cookie-policy')}
-    style={styles.link}
+    style={styles.footerLink}
   >
     Cookies
   </span>
 
   <span
     onClick={() => navigate('/content-rules')}
-    style={styles.link}
+    style={styles.footerLink}
   >
     Content Rules
   </span>
 
   <span
     onClick={() => navigate('/copyright-claim')}
-    style={styles.link}
+    style={styles.footerLink}
   >
     Copyright Claim
   </span>
 
+  <span
+    onClick={() => navigate('/about')}
+    style={styles.footerLink}
+  >
+    About Kasuku
+  </span>
+
 </div>
 
-  {/* 🔥 SECOND ROW */}
-  <div style={styles.footerBottom}>
-    <span onClick={() => navigate('/about')} style={styles.link}>
-      About Kasuku
-    </span>
-  </div>
-</div>
+      </footer>
 
     </div>
   );
 }
 
-const styles = {
+//////////////////////////////////////////////////
+// STYLES
+//////////////////////////////////////////////////
+
+const styles: any = {
+
   container: {
-    background: 'radial-gradient(circle at top, #1a002b, #020617, #000)',
-    color: '#fff',
     minHeight: '100vh',
+    background:
+      'radial-gradient(circle at top, #1a002b, #020617, #000)',
+    color: '#fff',
+    overflowX: 'hidden',
   },
 
   navbar: {
+    width: '100%',
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '20px',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 20,
+    padding: '20px 24px',
+    boxSizing: 'border-box',
   },
 
-  footerBottom: {
-  marginTop: 12,
-  display: 'flex',
-  justifyContent: 'center',
-  opacity: 0.7,
-  fontSize: 13,
-  letterSpacing: 1,
-},
+  navRight: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
 
-  postCard: {
-  background: 'rgba(20,20,20,0.9)',
-  padding: 12,
-  borderRadius: 14,
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  border: '1px solid rgba(255,255,255,0.06)',
-  backdropFilter: 'blur(10px)',
-  transition: '0.25s',
-},
+  select: {
+    background: '#111',
+    color: '#fff',
+    border: '1px solid #333',
+    borderRadius: 10,
+    padding: '10px 12px',
+    outline: 'none',
+  },
 
-postImageSmall: {
-  width: 90,
-  height: 90,
-  borderRadius: 12,
-  objectFit: 'cover',
-  flexShrink: 0,
-},
+  logoWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
 
-postContent: {
-  flex: 1,
-},
+  logoImg: {
+    width: 70,
+    objectFit: 'contain',
+  },
 
-postText: {
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: '#ddd',
-},
-
-  logoWrap: { display: 'flex', alignItems: 'center', gap: 10 },
-
-  logoImg: { height: 100 },
-
-  // 🔥 GRADIENT TEXT FIXED
   logoText: {
     fontSize: 26,
     fontWeight: 'bold',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
 
-  navLinks: { display: 'flex', gap: 15 },
-
-  link: { color: '#aaa', cursor: 'pointer' },
-
-  ctaBtn: {
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
-    padding: '6px 12px',
-    borderRadius: 6,
-    color: '#fff',
+  hero: {
+    width: '100%',
+    maxWidth: 1200,
+    margin: '0 auto',
+    textAlign: 'center',
+    padding: '80px 20px 40px',
+    boxSizing: 'border-box',
   },
 
-  hero: { padding: 100, textAlign: 'center' },
-
-  heroTitle: { fontSize: 52, lineHeight: 1.2 },
+  heroTitle: {
+    fontSize:
+      'clamp(42px, 8vw, 82px)',
+    lineHeight: 1.1,
+    fontWeight: 'bold',
+  },
 
   gradient: {
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
 
-  heroSub: { color: '#aaa', marginTop: 20 },
+  heroSub: {
+    color: '#aaa',
+    fontSize:
+      'clamp(15px, 2vw, 20px)',
+    maxWidth: 700,
+    margin:
+      '25px auto 0',
+    lineHeight: 1.7,
+  },
 
-  heroBtns: { marginTop: 30 },
+  heroBtns: {
+    marginTop: 40,
+    display: 'flex',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
 
   primaryBtn: {
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
-    padding: 12,
-    borderRadius: 8,
+    padding: '14px 26px',
+    borderRadius: 14,
+    border: 'none',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     color: '#fff',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    fontSize: 16,
   },
 
   secondaryBtn: {
-    marginLeft: 10,
-    padding: 12,
+    padding: '14px 26px',
+    borderRadius: 14,
+    border:
+      '1px solid rgba(255,255,255,0.12)',
     background: '#111',
     color: '#fff',
+    cursor: 'pointer',
+    fontSize: 16,
   },
 
-  pricing: { padding: 80 },
+  pricing: {
+    padding: '60px 20px',
+  },
 
   toggleWrap: {
     position: 'relative',
-    width: 220,
-    margin: '0 auto 40px',
+    width: 240,
+    margin: '0 auto 50px',
     background: '#111',
     borderRadius: 20,
     display: 'flex',
+    overflow: 'hidden',
   },
 
   slider: {
     position: 'absolute',
+    top: 0,
     width: '50%',
     height: '100%',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
-    borderRadius: 20,
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     transition: '0.3s',
   },
 
   toggleText: {
     flex: 1,
-    padding: 10,
+    padding: 12,
     background: 'transparent',
     border: 'none',
     color: '#fff',
     zIndex: 2,
     cursor: 'pointer',
+    fontWeight: 'bold',
   },
 
   cards: {
     display: 'flex',
     justifyContent: 'center',
-    gap: 30,
+    alignItems: 'stretch',
     flexWrap: 'wrap',
+    gap: 24,
   },
 
-  glowBorder: {
-    position: 'absolute',
-    inset: 0,
-    borderRadius: 18,
-    padding: 1,
-    background: 'linear-gradient(120deg,#ff003c,#7c3aed,#ff003c)',
-    WebkitMask:
-      'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
-    WebkitMaskComposite: 'xor',
-    opacity: 0.6,
-    pointerEvents: 'none',
+  icon: {
+    fontSize: 42,
+    marginBottom: 10,
   },
 
   badge: {
-    background: '#7c3aed',
-    padding: 5,
-    borderRadius: 10,
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
+    padding: '6px 12px',
+    borderRadius: 30,
     fontSize: 12,
+    fontWeight: 'bold',
   },
 
-  icon: { fontSize: 30, marginBottom: 10 },
+  sub: {
+    color: '#aaa',
+    marginTop: 10,
+    lineHeight: 1.6,
+  },
 
-  sub: { color: '#aaa' },
+  price: {
+    marginTop: 24,
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: '#ff003c',
+  },
 
-  price: { fontSize: 28, color: '#ff003c' },
+  month: {
+    color: '#999',
+    marginTop: 6,
+  },
 
-  month: { fontSize: 14 },
-
-  list: { textAlign: 'left', marginTop: 15, lineHeight: 1.8 },
+  list: {
+    marginTop: 24,
+    lineHeight: 2,
+    color: '#ddd',
+    paddingLeft: 18,
+  },
 
   cardBtn: {
-    marginTop: 15,
-    padding: 10,
+    marginTop: 24,
     width: '100%',
-    background: '#7c3aed',
+    padding: 14,
+    borderRadius: 14,
     border: 'none',
+    background:
+      'linear-gradient(90deg,#7c3aed,#ff003c)',
     color: '#fff',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    fontSize: 16,
   },
 
   ctaBig: {
-    marginTop: 15,
-    padding: 12,
+    marginTop: 24,
     width: '100%',
-    background: 'linear-gradient(90deg,#ff003c,#7c3aed)',
+    padding: 14,
+    borderRadius: 14,
     border: 'none',
+    background:
+      'linear-gradient(90deg,#ff003c,#7c3aed)',
     color: '#fff',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    fontSize: 16,
   },
 
-  feedSection: { padding: 60 },
+  feedSection: {
+    padding: '20px 20px 80px',
+  },
 
-  feedTitle: { fontSize: 26, marginBottom: 20 },
+  feedTitle: {
+    fontSize: 30,
+    marginBottom: 30,
+    textAlign: 'center',
+  },
 
   feedGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))',
+    gridTemplateColumns:
+      'repeat(auto-fit,minmax(280px,1fr))',
     gap: 20,
   },
 
   postCard: {
-    background: '#111',
-    padding: 15,
-    borderRadius: 12,
+    background:
+      'rgba(20,20,20,0.95)',
+    borderRadius: 18,
+    overflow: 'hidden',
+    border:
+      '1px solid rgba(255,255,255,0.08)',
   },
 
-  postImage: {
+  postImageSmall: {
     width: '100%',
-    borderRadius: 10,
-    marginBottom: 10,
+    height: 220,
+    objectFit: 'cover',
+  },
+
+  postContent: {
+    padding: 18,
+  },
+
+  postText: {
+    color: '#ddd',
+    lineHeight: 1.7,
+    fontSize: 15,
   },
 
   footer: {
-    marginTop: 60,
-    padding: 20,
-    borderTop: '1px solid #222',
+    borderTop:
+      '1px solid rgba(255,255,255,0.08)',
+    padding: '30px 20px',
     display: 'flex',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+    textAlign: 'center',
+  },
+
+  footerText: {
+    color: '#777',
   },
 
   footerLinks: {
     display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 20,
   },
+
+  footerLink: {
+    color: '#aaa',
+    cursor: 'pointer',
+    transition: '0.2s',
+  },
+
 };

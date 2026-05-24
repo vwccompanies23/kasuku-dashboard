@@ -65,15 +65,14 @@ export default function Payment() {
   // PAYMENT
   // =========================
   const handlePayment = async () => {
+if (!plan) {
 
-    if (!plan) {
+  alert(
+    'Please select a subscription plan first'
+  );
 
-      alert('No plan selected ❌');
-
-      navigate('/pricing');
-
-      return;
-    }
+  return;
+}
 
     setLoading(true);
 

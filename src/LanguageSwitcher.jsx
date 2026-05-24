@@ -1,11 +1,12 @@
-import { useLanguage }
-from '../LanguageContext';
+import {
+  useLanguage,
+} from '../LanguageContext';
 
 export default function LanguageSwitcher() {
 
   const {
     lang,
-    changeLang,
+    setLang,
   } = useLanguage();
 
   return (
@@ -13,7 +14,9 @@ export default function LanguageSwitcher() {
     <select
       value={lang}
       onChange={(e) =>
-        changeLang(e.target.value)
+        setLang(
+          e.target.value
+        )
       }
       style={styles.select}
     >
@@ -43,7 +46,9 @@ export default function LanguageSwitcher() {
       </option>
 
     </select>
+
   );
+
 }
 
 const styles = {
@@ -57,10 +62,22 @@ const styles = {
     border:
       '1px solid #333',
 
-    padding: '6px 10px',
+    padding: '10px 14px',
 
-    borderRadius: 8,
+    borderRadius: 10,
 
     cursor: 'pointer',
+
+    width: '100%',
+
+    fontSize: 14,
+
+    outline: 'none',
+
+    marginTop: 12,
+
+    boxSizing:
+      'border-box',
   },
+
 };

@@ -118,23 +118,36 @@ api.interceptors.response.use(
     //////////////////////////////////////////////////
     // 🚀 SUBSCRIPTION REQUIRED
     //////////////////////////////////////////////////
-    if (status === 403) {
+   if (status === 403) {
 
-      console.warn(
-        '🚀 Subscription required',
-      );
+  console.warn(
+    '🚫 Forbidden request',
+  );
 
-      const currentPath =
-        window.location.pathname;
+  const message =
+    error?.response?.data?.message || '';
 
-      localStorage.setItem(
-        'redirectAfterLogin',
-        currentPath,
-      );
+  //////////////////////////////////////////////////
+  // 🚀 ONLY SUBSCRIPTION ERRORS
+  //////////////////////////////////////////////////
+  if (
+    message
+      .toLowerCase()
+      .includes('subscription')
+  ) {
 
-      window.location.href =
-        '/pricing';
-    }
+    const currentPath =
+      window.location.pathname;
+
+    localStorage.setItem(
+      'redirectAfterLogin',
+      currentPath,
+    );
+
+    window.location.href =
+      '/pricing';
+  }
+}
 
     return Promise.reject(error);
   },

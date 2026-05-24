@@ -7,31 +7,55 @@ import TracksManager from '../components/TracksManager';
 import { api } from '../api';
 
 export default function CreateRelease() {
-  const [showUpgrade, setShowUpgrade] = useState(false);
-const user = JSON.parse(
-  localStorage.getItem('user') || '{}'
-);
+  const navigate = useNavigate();
 
-const navigate = useNavigate();
+  const user = JSON.parse(
+    localStorage.getItem('user') || '{}'
+  );
 
-const isAdmin =
-  user?.role === 'admin';
+  const isAdmin =
+    user?.role === 'admin';
 
-const userPlan =
-  isAdmin
-    ? 3
-    : user?.plan === 'pro'
-    ? 3
-    : user?.plan === 'artist'
-    ? 2
-    : 1;
+  const getPlanLevel = (plan) => {
+  if (plan === 'pro') return 3;
+  if (plan === 'artist') return 2;
+  if (plan === 'solo') return 1;
+  return 0;
+};
 
-  const [type, setType] = useState('single');
+const userPlan = isAdmin
+  ? 999
+  : getPlanLevel(user?.plan);
+
+  const [showUpgrade, setShowUpgrade] =
+    useState(false);
+
+  const [publishing, setPublishing] =
+    useState(false);
+
+  const [type, setType] =
+    useState('single');
+
+  const [cover, setCover] =
+    useState(null);
+
+  const [coverPreview, setCoverPreview] =
+    useState(null);
+
+  const [releaseStatus, setReleaseStatus] =
+    useState('not_live');
+
+  const [selectedPlatforms, setSelectedPlatforms] =
+    useState([]);
+
+  const audioRef = useRef();
 
   const emptyTrack = () => ({
     title: '',
     file: null,
     duration: '',
+
+    producer: '',
 
     hasFeatured: false,
     featuredArtists: [],
@@ -46,29 +70,21 @@ const userPlan =
     originalSongTitle: '',
     originalSongwriter: '',
 
-    songwriterNames: '',
+    songwriterNames: [''],
 
     radioEdit: 'no',
 
     previewStartTime: '',
   });
 
-  const [tracks, setTracks] = useState([emptyTrack()]);
+ const [tracks, setTracks] = useState([
+  emptyTrack(),
+]);
 
-  const [cover, setCover] = useState(null);
-
-  const [coverPreview, setCoverPreview] = useState(null);
-
-  const [releaseStatus, setReleaseStatus] =
-    useState('not_live');
-
-  const [selectedPlatforms, setSelectedPlatforms] =
-    useState([]);
-
-    const [publishing, setPublishing] =
-  useState(false);
-
-  const [artists, setArtists] = useState<any[]>([]);
+const [
+  selectedTrackIndex,
+  setSelectedTrackIndex,
+] = useState(0);
 
   const [form, setForm] = useState({
     title: '',
@@ -80,33 +96,40 @@ const userPlan =
     labelName: '',
   });
 
-  const audioRef = useRef();
-
   // =========================
   // LOAD DRAFT
   // =========================
 
   useEffect(() => {
-    const saved = localStorage.getItem('releaseDraft');
+    const saved =
+      localStorage.getItem(
+        'releaseDraft'
+      );
 
     if (saved) {
-      const data = JSON.parse(saved);
+      const data =
+        JSON.parse(saved);
 
       setForm(data.form || {});
 
       setTracks(
         Array.isArray(data.tracks) &&
           data.tracks.length > 0
-          ? data.tracks.map((track) => ({
-              ...emptyTrack(),
-              ...track,
-              featuredArtists:
-                track.featuredArtists || [],
-            }))
+          ? data.tracks.map(
+              (track) => ({
+                ...emptyTrack(),
+                ...track,
+                featuredArtists:
+                  track.featuredArtists ||
+                  [],
+              })
+            )
           : [emptyTrack()]
       );
 
-      setCoverPreview(data.coverPreview || null);
+      setCoverPreview(
+        data.coverPreview || null
+      );
 
       setSelectedPlatforms(
         data.selectedPlatforms || []
@@ -123,11 +146,14 @@ const userPlan =
       'releaseDraft',
       JSON.stringify({
         form,
+
         tracks: tracks.map((t) => ({
-  ...t,
-  file: null,
-})),
+          ...t,
+          file: null,
+        })),
+
         coverPreview,
+
         selectedPlatforms,
       })
     );
@@ -139,7 +165,7 @@ const userPlan =
   ]);
 
   // =========================
-  // TRACK TYPE
+  // CHANGE TYPE
   // =========================
 
   const changeType = (t) => {
@@ -195,10 +221,13 @@ const userPlan =
 
     setCover(file);
 
-    const reader = new FileReader();
+    const reader =
+      new FileReader();
 
     reader.onloadend = () => {
-      setCoverPreview(reader.result);
+      setCoverPreview(
+        reader.result
+      );
     };
 
     reader.readAsDataURL(file);
@@ -208,7 +237,6 @@ const userPlan =
     e.stopPropagation();
 
     setCover(null);
-
     setCoverPreview(null);
   };
 
@@ -222,9 +250,11 @@ const userPlan =
   ) => {
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
+    const url =
+      URL.createObjectURL(file);
 
-    const audio = new Audio(url);
+    const audio =
+      new Audio(url);
 
     audio.onloadedmetadata = () => {
       const duration = Math.floor(
@@ -235,7 +265,8 @@ const userPlan =
         duration / 60
       );
 
-      const secs = duration % 60;
+      const secs =
+        duration % 60;
 
       const formatted = `${mins}:${secs
         .toString()
@@ -244,25 +275,33 @@ const userPlan =
       const copy = [...tracks];
 
       copy[index] = {
-  ...copy[index],
-  file,
-  duration: formatted,
-  title:
-    copy[index].title ||
-    file.name.replace(/\.[^/.]+$/, ''),
-};
+        ...copy[index],
+
+        file,
+
+        duration: formatted,
+
+        title:
+          copy[index].title ||
+          file.name.replace(
+            /\.[^/.]+$/,
+            ''
+          ),
+      };
 
       setTracks(copy);
     };
   };
 
-  const removeAudio = (index, e) => {
+  const removeAudio = (
+    index,
+    e
+  ) => {
     e.stopPropagation();
 
     const copy = [...tracks];
 
     copy[index].file = null;
-
     copy[index].duration = '';
 
     setTracks(copy);
@@ -298,255 +337,313 @@ const userPlan =
   // UPLOAD
   // =========================
 
-  const uploadToCloud = async () => {
-  try {
-    const formData = new FormData();
+  const uploadToCloud =
+    async () => {
+      try {
+        const formData =
+          new FormData();
 
-    formData.append(
-      'title',
-      form.title
-    );
+        formData.append(
+          'title',
+          form.title
+        );
 
-    formData.append(
-      'artistName',
-      form.artistName
-    );
+        formData.append(
+          'artistName',
+          form.artistName
+        );
 
-    formData.append(
-      'date',
-      form.date
-    );
+        formData.append(
+          'date',
+          form.date
+        );
 
-    formData.append(
-      'labelName',
-      form.labelName || ''
-    );
+        formData.append(
+          'labelName',
+          form.labelName || ''
+        );
 
-    formData.append(
-      'platforms',
-      JSON.stringify(selectedPlatforms)
-    );
+        formData.append(
+          'platforms',
+          JSON.stringify(
+            selectedPlatforms
+          )
+        );
 
-    formData.append(
-      'trackTitles',
-      JSON.stringify(
-        tracks.map((t) => t.title)
-      )
-    );
+        formData.append(
+          'trackTitles',
+          JSON.stringify(
+            tracks.map(
+              (t) => t.title
+            )
+          )
+        );
 
-    if (form.upc) {
-      formData.append(
-        'upc',
-        form.upc
-      );
-    }
+        if (form.upc) {
+          formData.append(
+            'upc',
+            form.upc
+          );
+        }
 
-    if (form.isrc) {
-      formData.append(
-        'isrc',
-        form.isrc
-      );
-    }
+        if (form.isrc) {
+          formData.append(
+            'isrc',
+            form.isrc
+          );
+        }
 
-    if (form.originalDate) {
-      formData.append(
-        'originalDate',
-        form.originalDate
-      );
-    }
+        if (form.originalDate) {
+          formData.append(
+            'originalDate',
+            form.originalDate
+          );
+        }
 
-    if (cover) {
-      formData.append(
-        'cover',
-        cover
-      );
-    }
+        if (cover) {
+          formData.append(
+            'cover',
+            cover
+          );
+        }
 
-    tracks.forEach((track, index) => {
+        tracks.forEach(
+          (track, index) => {
+            // 🎵 AUDIO FILE
+            if (track.file) {
+              formData.append(
+                'tracks',
+                track.file
+              );
+            }
 
-  // 🎵 AUDIO FILE
-  if (track.file) {
-    formData.append(
-      'tracks',
-      track.file
-    );
-  }
+            // 🎵 TRACK TITLE
+            formData.append(
+              `track_${index}_title`,
+              track.title || ''
+            );
 
-  // 🎵 TRACK TITLE
-  formData.append(
-    `track_${index}_title`,
-    track.title || ''
-  );
+            // 🌍 LANGUAGE
+            formData.append(
+              `track_${index}_language`,
+              track.language || ''
+            );
 
-  // 🌍 LANGUAGE
-  formData.append(
-    `track_${index}_language`,
-    track.language || ''
-  );
+            // 🎼 GENRES
 
-  // 🎼 GENRES
-  formData.append(
-    `track_${index}_primaryGenre`,
-    track.primaryGenre || ''
-  );
-
-  formData.append(
-    `track_${index}_secondaryGenre`,
-    track.secondaryGenre || ''
-  );
-
-  // ✍️ SONGWRITER
-  formData.append(
-    `track_${index}_songwriterOption`,
-    track.songwriterOption || ''
-  );
-
-  formData.append(
-    `track_${index}_songwriterNames`,
-    track.songwriterNames || ''
-  );
-
-  // 📻 RADIO EDIT
-  formData.append(
-    `track_${index}_radioEdit`,
-    track.radioEdit || ''
-  );
-
-  // ⏱ PREVIEW TIME
-  formData.append(
-    `track_${index}_previewStartTime`,
-    track.previewStartTime || ''
-  );
-
-  // 🎤 FEATURED ARTISTS
-  formData.append(
-    `track_${index}_featuredArtists`,
-    JSON.stringify(
-      track.featuredArtists || []
-    )
-  );
-
-  // 🔁 ORIGINAL SONG INFO
-  formData.append(
-    `track_${index}_originalArtistName`,
-    track.originalArtistName || ''
-  );
-
-  formData.append(
-    `track_${index}_originalSongTitle`,
-    track.originalSongTitle || ''
-  );
-
-  formData.append(
-    `track_${index}_originalSongwriter`,
-    track.originalSongwriter || ''
-  );
-});
-
-formData.append(
-  'releaseStatus',
-  releaseStatus
+            formData.append(
+  `track_${index}_producer`,
+  track.producer || ''
 );
 
-    console.log(
-      'SELECTED PLATFORMS:',
-      selectedPlatforms
-    );
+            formData.append(
+              `track_${index}_primaryGenre`,
+              track.primaryGenre ||
+                ''
+            );
 
-    const token =
-      localStorage.getItem('token');
+            formData.append(
+              `track_${index}_secondaryGenre`,
+              track.secondaryGenre ||
+                ''
+            );
 
-      for (let pair of formData.entries()) {
-  console.log(pair[0], pair[1]);
-}
+            // ✍️ SONGWRITER
+            formData.append(
+              `track_${index}_songwriterOption`,
+              track.songwriterOption ||
+                ''
+            );
 
+            formData.append(
+              `track_${index}_songwriterNames`,
+              track.songwriterNames ||
+                ''
+            );
 
-    const res = await api.post(
+            // 📻 RADIO EDIT
+            formData.append(
+              `track_${index}_radioEdit`,
+              track.radioEdit || ''
+            );
 
-      '/releases/upload-full',
-      formData,
-      {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
-      },
-    );
+            // ⏱ PREVIEW TIME
+            formData.append(
+              `track_${index}_previewStartTime`,
+              track.previewStartTime ||
+                ''
+            );
 
-    return res.data;
+            // 🎤 FEATURED ARTISTS
+            formData.append(
+              `track_${index}_featuredArtists`,
+              JSON.stringify(
+                track.featuredArtists ||
+                  []
+              )
+            );
 
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
-};
+            // 🔁 ORIGINAL SONG INFO
+            formData.append(
+              `track_${index}_originalArtistName`,
+              track.originalArtistName ||
+                ''
+            );
+
+            formData.append(
+              `track_${index}_originalSongTitle`,
+              track.originalSongTitle ||
+                ''
+            );
+
+            formData.append(
+              `track_${index}_originalSongwriter`,
+              track.originalSongwriter ||
+                ''
+            );
+          }
+        );
+
+        formData.append(
+          'releaseStatus',
+          releaseStatus
+        );
+
+        const token =
+          localStorage.getItem(
+            'token'
+          );
+
+        console.log(
+          '🚀 STARTING RELEASE UPLOAD'
+        );
+
+        const res =
+          await api.post(
+            '/releases/upload-full',
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+        return res.data;
+      } catch (err) {
+        console.log(
+          '❌ uploadToCloud ERROR'
+        );
+
+        console.log(err);
+
+        throw err;
+      }
+    };
 
   // =========================
   // PUBLISH
   // =========================
 
-  const handlePublish = async () => {
+  const handlePublish =
+    async () => {
+      if (publishing) return;
 
-    setPublishing(true);
+      try {
+        setPublishing(true);
 
-    try {
-      // ✅ VALIDATION
-if (!form.title) {
-  return alert('Release title required');
-}
+        // ✅ VALIDATION
 
-if (!form.artistName) {
-  return alert('Artist name required');
-}
+        if (!form.title) {
+          alert(
+            'Release title required'
+          );
+          return;
+        }
 
-if (!form.date) {
-  return alert('Release date required');
-}
+        if (!form.artistName) {
+          alert(
+            'Artist name required'
+          );
+          return;
+        }
 
-if (!cover) {
-  return alert('Cover image required');
-}
+        if (!form.date) {
+          alert(
+            'Release date required'
+          );
+          return;
+        }
 
-for (const track of tracks) {
+        if (!cover) {
+          alert(
+            'Cover image required'
+          );
+          return;
+        }
 
-  if (!track.title) {
-    return alert('Track title required');
-  }
+        for (const track of tracks) {
+          if (!track.title) {
+            alert(
+              'Track title required'
+            );
+            return;
+          }
 
-  if (!track.file) {
-    return alert(
-      `Audio file missing for ${track.title || 'track'}`
-    );
-  }
-}
+          if (!track.file) {
+            alert(
+              `Audio file missing for ${
+                track.title ||
+                'track'
+              }`
+            );
 
-await uploadToCloud();
+            return;
+          }
+        }
 
-      localStorage.removeItem(
-        'releaseDraft'
-      );
+        const result =
+          await uploadToCloud();
 
-      setPublishing(false);
+        console.log(
+          '✅ SUCCESS',
+          result
+        );
 
-      navigate('/my-music');
-    } catch (err) {
+        localStorage.removeItem(
+          'releaseDraft'
+        );
 
-      setPublishing(false);
+        alert(
+          'Release uploaded successfully ✅'
+        );
 
-      console.log(err);
+        navigate('/my-music');
+      } catch (err) {
+        console.log(
+          '❌ UPLOAD ERROR',
+          err
+        );
 
-     console.log(
-  err?.response?.data,
-);
+        console.log(
+          err?.response?.data
+        );
 
-alert(
-  JSON.stringify(
-    err?.response?.data,
-  ),
-);
+        alert(
+          err?.response?.data
+            ?.message ||
+            'Upload failed ❌'
+        );
+      } finally {
+        setPublishing(false);
+      }
+    };
 
-};
-  }
+    const isMobile =
+  window.innerWidth <= 768;
+
+const isTablet =
+  window.innerWidth <= 1100;
 
   return (
     <div style={styles.container}>
@@ -565,6 +662,7 @@ alert(
             }
             style={{
               ...styles.btn,
+
               background:
                 type === t
                   ? 'linear-gradient(90deg,#ff003c,#7c3aed)'
@@ -576,10 +674,23 @@ alert(
         ))}
       </div>
 
-      <div style={styles.grid}>
+      <div
+  style={{
+    ...styles.grid,
+
+    gridTemplateColumns:
+      isMobile
+        ? '1fr'
+        : isTablet
+        ? '1fr'
+        : 'minmax(0, 1fr) 360px',
+  }}
+>
         <div style={styles.left}>
           <div style={styles.card}>
-            <h3>Release Details</h3>
+            <h3>
+              Release Details
+            </h3>
 
             <input
               placeholder="Title"
@@ -597,7 +708,9 @@ alert(
             <input
               placeholder="Artist Name"
               style={styles.input}
-              value={form.artistName}
+              value={
+                form.artistName
+              }
               onChange={(e) =>
                 setForm({
                   ...form,
@@ -613,7 +726,8 @@ alert(
               style={{
                 ...styles.input,
                 color: '#fff',
-                colorScheme: 'dark',
+                colorScheme:
+                  'dark',
               }}
               onChange={(e) =>
                 setForm({
@@ -626,11 +740,12 @@ alert(
 
             <div
               style={{
-                position: 'relative',
+                position:
+                  'relative',
               }}
               onClick={() => {
                 if (
-                  userPlan === 1 &&
+                  userPlan < 2 &&
                   !isAdmin
                 ) {
                   setShowUpgrade(
@@ -643,28 +758,29 @@ alert(
                 placeholder="Label Name"
                 style={{
                   ...styles.input,
-                  opacity:
-                    userPlan ===
-                      1 &&
-                    !isAdmin
-                      ? 0.6
-                      : 1,
+
+                 opacity:
+  userPlan < 2 &&
+  !isAdmin
+    ? 0.6
+    : 1,
                 }}
                 value={
                   form.labelName
                 }
                 onChange={(e) => {
                   if (
-                    userPlan ===
-                      1 &&
-                    !isAdmin
-                  )
-                    return;
+  userPlan < 2 &&
+  !isAdmin
+)
+  return;
 
                   setForm({
                     ...form,
+
                     labelName:
-                      e.target.value,
+                      e.target
+                        .value,
                   });
                 }}
               />
@@ -682,6 +798,7 @@ alert(
                   onChange={(e) =>
                     setForm({
                       ...form,
+
                       upc:
                         e.target
                           .value,
@@ -698,6 +815,7 @@ alert(
                   onChange={(e) =>
                     setForm({
                       ...form,
+
                       isrc:
                         e.target
                           .value,
@@ -706,6 +824,8 @@ alert(
                 />
               </>
             )}
+
+            {/* COVER */}
 
             <label
               style={
@@ -724,6 +844,7 @@ alert(
                     src={
                       coverPreview
                     }
+                    alt="Cover"
                     style={
                       styles.coverPreview
                     }
@@ -749,16 +870,20 @@ alert(
               <input
                 type="file"
                 hidden
+                accept="image/*"
                 onChange={(e) =>
                   handleCover(
                     e.target
-                      .files[0]
+                      .files?.[0]
                   )
                 }
               />
             </label>
 
-            {type === 'single' && (
+            {/* SINGLE AUDIO */}
+
+            {type ===
+              'single' && (
               <label
                 style={
                   styles.uploadBox
@@ -794,10 +919,11 @@ alert(
                 <input
                   type="file"
                   hidden
+                  accept=".mp3,.wav,audio/*"
                   onChange={(e) =>
                     handleAudio(
                       e.target
-                        .files[0]
+                        .files?.[0]
                     )
                   }
                 />
@@ -805,10 +931,13 @@ alert(
             )}
           </div>
 
-          {type !== 'single' && (
+          {type !==
+            'single' && (
             <TracksManager
               tracks={tracks}
-              setTracks={setTracks}
+              setTracks={
+                setTracks
+              }
               handleAudio={
                 handleAudio
               }
@@ -823,27 +952,74 @@ alert(
             />
           )}
 
-          <MoreFeatures
-            track={
-              tracks[0] ||
-              emptyTrack()
-            }
-            setTrack={(
-              updatedTrack
-            ) => {
-              const copy = [
-               ...tracks 
-              ];
+          <div style={styles.card}>
+  <h3>
+    Track Metadata
+  </h3>
 
-              copy[0] =
-                updatedTrack;
+  {tracks.length > 1 && (
+    <select
+      value={
+        selectedTrackIndex
+      }
+      onChange={(e) =>
+        setSelectedTrackIndex(
+          Number(
+            e.target.value
+          )
+        )
+      }
+      style={styles.input}
+    >
+      {tracks.map(
+        (track, index) => (
+          <option
+            key={index}
+            value={index}
+          >
+            {track.title ||
+              `Track ${
+                index + 1
+              }`}
+          </option>
+        )
+      )}
+    </select>
+  )}
 
-              setTracks(copy);
-            }}
-          />
+  <MoreFeatures
+    track={
+      tracks[
+        selectedTrackIndex
+      ] || emptyTrack()
+    }
+    setTrack={(
+      updatedTrack
+    ) => {
+      const copy = [
+        ...tracks,
+      ];
+
+      copy[
+        selectedTrackIndex
+      ] = updatedTrack;
+
+      setTracks(copy);
+    }}
+  />
+</div>
         </div>
 
-        <div style={styles.right}>
+        <div
+  style={{
+    ...styles.right,
+
+    position:
+      isTablet
+        ? 'relative'
+        : 'sticky',
+  }}
+>
           <div style={styles.card}>
             <h3>
               🎵 Artist Profile
@@ -858,6 +1034,7 @@ alert(
               <div
                 style={{
                   ...styles.slider,
+
                   transform:
                     releaseStatus ===
                     'not_live'
@@ -914,144 +1091,312 @@ alert(
       />
 
       <button
-  style={styles.publish}
-  onClick={handlePublish}
-  disabled={publishing}
->
-  {publishing
-    ? 'Uploading...'
-    : '🚀 Publish Release'}
-</button>
+        style={{
+          ...styles.publish,
+
+          opacity:
+            publishing
+              ? 0.7
+              : 1,
+
+          cursor:
+            publishing
+              ? 'not-allowed'
+              : 'pointer',
+        }}
+        onClick={
+          handlePublish
+        }
+        disabled={publishing}
+      >
+        {publishing
+          ? 'Uploading...'
+          : '🚀 Publish Release'}
+      </button>
     </div>
   );
 }
 
 const styles = {
-  container: {
-    padding: 20,
-    background: '#000',
-    color: '#fff',
-  },
+ container: {
+
+  width: '100%',
+
+  maxWidth: 1600,
+
+  margin: '0 auto',
+
+  padding: '24px',
+
+  background: '#000',
+
+  color: '#fff',
+
+  minHeight: '100vh',
+
+  boxSizing: 'border-box',
+
+  overflowX: 'hidden',
+},
 
   switch: {
     display: 'flex',
     gap: 10,
     marginBottom: 20,
+
+    flexWrap: 'wrap',
   },
 
   btn: {
-    padding: 10,
+    padding:
+      '10px 18px',
+
     borderRadius: 8,
+
     color: '#fff',
+
+    border: 'none',
+
+    cursor: 'pointer',
+
+    minWidth: 100,
   },
 
   grid: {
-    display: 'flex',
-    gap: 20,
-  },
+
+  display: 'grid',
+
+  gridTemplateColumns:
+    'minmax(0, 1fr) 360px',
+
+  gap: 24,
+
+  alignItems: 'start',
+
+  width: '100%',
+},
 
   left: {
-    flex: 2,
+    width: '100%',
+
+    minWidth: 0,
   },
 
   right: {
-    flex: 1,
+    width: '100%',
+
+    position: 'sticky',
+
+    top: 24,
+
+    alignSelf: 'start',
   },
 
   card: {
     background: '#0a0a0a',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
+
+    padding: 24,
+
+    borderRadius: 18,
+
+    marginBottom: 24,
+
+    border:
+      '1px solid rgba(255,255,255,0.06)',
+
+      boxShadow:
+         '0 0 25px rgba(0,0,0,0.25)',
+
+         overflow: 'hidden',
   },
 
   input: {
     width: '100%',
-    padding: 10,
-    marginBottom: 10,
+
+    padding: 14,
+
+    fontSize: 15,
+
+    boxSizing: 'border-box',
+
+    marginBottom: 14,
+
     background: '#111',
-    border: '1px solid #222',
+
+    border:
+      '1px solid #222',
+
     color: '#fff',
+
+    borderRadius: 12,
+
+    outline: 'none',
+
+    transition:
+      'all 0.2s ease',
   },
 
   uploadBox: {
     border:
       '1px dashed #7c3aed',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 10,
+
+    padding: 28,
+
+    borderRadius: 18,
+
+    marginBottom: 16,
+
     cursor: 'pointer',
+
     textAlign: 'center',
+
+    transition:
+      'all 0.25s ease',
+
+    overflow: 'hidden',
+
+    background:
+      'rgba(255,255,255,0.02)',
   },
 
   uploadBoxSmall: {
     border:
       '1px dashed #7c3aed',
+
     padding: 10,
+
     borderRadius: 8,
+
     marginBottom: 5,
   },
 
   coverPreview: {
-    width: '100%',
-    borderRadius: 10,
-  },
+
+  width: '100%',
+
+  aspectRatio: '1 / 1',
+
+  objectFit: 'cover',
+
+  borderRadius: 18,
+
+  maxWidth: 420,
+
+  margin: '0 auto',
+},
 
   duration: {
     fontSize: 12,
     color: '#aaa',
+    marginTop: 6,
   },
 
   removeBtn: {
     background: '#ff004c',
+
     color: '#fff',
+
     border: 'none',
-    padding: 6,
-    marginTop: 5,
+
+    padding:
+      '8px 12px',
+
+    marginTop: 10,
+
     cursor: 'pointer',
+
+    borderRadius: 8,
   },
 
   addBtn: {
     background: '#7c3aed',
+
     color: '#fff',
+
     border: 'none',
+
     padding: 10,
+
+    borderRadius: 8,
   },
 
   selector: {
     position: 'relative',
-    border: '1px solid #222',
+
+    border:
+      '1px solid #222',
+
     borderRadius: 10,
+
     overflow: 'hidden',
   },
 
   slider: {
     position: 'absolute',
+
     width: '100%',
+
     height: '50%',
+
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
+
+    transition:
+      'transform 0.25s ease',
   },
 
   option: {
-    padding: 12,
+    padding: 14,
+
     cursor: 'pointer',
+
+    position: 'relative',
+
+    zIndex: 2,
   },
 
-  publish: {
-    width: '100%',
-    padding: 15,
-    background:
-      'linear-gradient(90deg,#ff003c,#7c3aed)',
-    border: 'none',
-    color: '#fff',
-  },
+ publish: {
+
+  width: '100%',
+
+  padding: 18,
+
+  background:
+    'linear-gradient(90deg,#ff003c,#7c3aed)',
+
+  border: 'none',
+
+  color: '#fff',
+
+  fontSize: 17,
+
+  fontWeight: 'bold',
+
+  borderRadius: 18,
+
+  marginTop: 30,
+
+  cursor: 'pointer',
+
+  transition:
+    'all 0.25s ease',
+
+  maxWidth: 500,
+
+  display: 'block',
+
+  marginInline: 'auto',
+},
 
   lockText: {
     position: 'absolute',
+
     right: 10,
+
     top: 10,
+
     fontSize: 11,
+
     color: '#ff4d6d',
   },
 };

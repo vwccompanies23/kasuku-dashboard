@@ -6,95 +6,166 @@ import WaveSurfer from 'wavesurfer.js';
 import logo from '../assets/kasuku-logo.png';
 
 //////////////////////////////////////////////////
+// 🌍 LANGUAGE SYSTEM
+//////////////////////////////////////////////////
+const TEXT = {
+  en: {
+    title: 'My Releases',
+
+    subtitle:
+      'Track all your published and pending releases',
+
+    loading: 'Loading releases...',
+
+    emptyTitle: 'No releases found',
+
+    emptySubtitle:
+      'Upload music and it will appear here automatically',
+
+    pending: 'Pending',
+
+    processing: 'Processing',
+
+    submitted: 'Submitted',
+
+    approved: 'Approved',
+
+    live: 'Live',
+
+    draft: 'Draft',
+
+    delivered: 'Delivered',
+
+    failed: 'Failed',
+
+    all: 'All',
+
+    play: '▶ Play',
+
+    pause: '⏸ Pause',
+
+    edit: '✏ Edit',
+
+    delete: '🗑 Delete',
+
+    confirmDelete:
+      'Delete this release?',
+
+    deleteFailed:
+      'Delete failed ❌',
+  },
+};
+
+//////////////////////////////////////////////////
+// 🌍 CURRENT LANGUAGE
+//////////////////////////////////////////////////
+const lang = 'en';
+
+const t = TEXT[lang];
+
+//////////////////////////////////////////////////
 // 🔥 BACKEND URL
 //////////////////////////////////////////////////
-const BASE_URL = 'https://kasuku-backend.onrender.com';
+const BASE_URL =
+  'https://kasuku-backend.onrender.com';
 
 //////////////////////////////////////////////////
 // 🔥 FIX URL
 //////////////////////////////////////////////////
 const fixUrl = (path) => {
-  if (!path) return '';
 
-  if (path.startsWith('http')) {
+  if (!path) {
+    return logo;
+  }
+
+  // already full URL
+  if (
+    path.startsWith('http://') ||
+    path.startsWith('https://')
+  ) {
     return path;
   }
 
-  if (path.startsWith('/')) {
-    return `${BASE_URL}${path}`;
-  }
+ // normalize slashes
+let cleanPath = path.trim();
 
-  return `${BASE_URL}/uploads/${path}`;
+if (!cleanPath.startsWith('/')) {
+  cleanPath = '/' + cleanPath;
+}
+
+return `${BASE_URL}${cleanPath}`;
 };
 
+
 //////////////////////////////////////////////////
-// 🔥 AUDIO PLAYER
+// 🎵 AUDIO PLAYER
 //////////////////////////////////////////////////
 const AudioPlayer = ({ src }) => {
   const ref = useRef(null);
 
-  const ws = useRef(null);
+  const waveRef = useRef(null);
 
   const [playing, setPlaying] =
     useState(false);
 
   useEffect(() => {
-    if (!ref.current || !src) return;
+    if (!ref.current || !src)
+      return;
 
-    if (ws.current) {
-      ws.current.destroy();
+    if (waveRef.current) {
+      waveRef.current.destroy();
     }
 
-    ws.current = WaveSurfer.create({
-      container: ref.current,
+    waveRef.current =
+      WaveSurfer.create({
+        container: ref.current,
 
-      waveColor: '#7c3aed',
+        waveColor: '#7c3aed',
 
-      progressColor: '#ff003c',
+        progressColor: '#ff003c',
 
-      cursorColor: '#ffffff',
+        cursorColor: '#ffffff',
 
-      barWidth: 3,
+        barWidth: 2,
 
-      barRadius: 4,
+        barRadius: 4,
 
-      height: 70,
+        height: 60,
 
-      responsive: true,
+        responsive: true,
 
-      normalize: true,
-    });
+        normalize: true,
+      });
 
-    ws.current.load(src);
+    waveRef.current.load(src);
 
-    ws.current.on('finish', () => {
-      setPlaying(false);
-    });
+    waveRef.current.on(
+      'finish',
+      () => {
+        setPlaying(false);
+      },
+    );
 
     return () => {
-      if (ws.current) {
-        ws.current.destroy();
+      if (waveRef.current) {
+        waveRef.current.destroy();
       }
     };
   }, [src]);
 
   const toggle = () => {
-    if (!ws.current) return;
+    if (!waveRef.current) return;
 
-    ws.current.playPause();
+    waveRef.current.playPause();
 
     setPlaying(!playing);
   };
 
   return (
-    <div style={{ marginTop: 14 }}>
+    <div style={styles.playerWrap}>
       <div
         ref={ref}
-        style={{
-          width: '100%',
-          overflow: 'hidden',
-          borderRadius: 12,
-        }}
+        style={styles.wave}
       />
 
       <button
@@ -102,8 +173,8 @@ const AudioPlayer = ({ src }) => {
         style={styles.playBtn}
       >
         {playing
-          ? '⏸ Pause'
-          : '▶️ Play'}
+          ? t.pause
+          : t.play}
       </button>
     </div>
   );
@@ -117,7 +188,7 @@ export default function MyReleases() {
     useState([]);
 
   const [filter, setFilter] =
-    useState('pending');
+    useState('all');
 
   const [loading, setLoading] =
     useState(true);
@@ -125,133 +196,161 @@ export default function MyReleases() {
   //////////////////////////////////////////////////
   // 🔥 FETCH RELEASES
   //////////////////////////////////////////////////
-  const fetchReleases = async () => {
+  const fetchReleases =
+    async () => {
+      try {
+        const userId =
+          localStorage.getItem(
+            'userId',
+          );
 
-    try {
+        const token =
+          localStorage.getItem(
+            'token',
+          );
 
-      const userId =
-        localStorage.getItem('userId');
+        if (!userId || !token) {
+          window.location.href =
+            '/login';
 
-      const token =
-        localStorage.getItem('token');
+          return;
+        }
 
-      console.log(
-        '🔥 USER ID:',
-        userId,
-      );
-
-      console.log(
-        '🔥 TOKEN:',
-        token,
-      );
-
-      //////////////////////////////////////////////////
-      // 🔒 AUTH CHECK
-      //////////////////////////////////////////////////
-      if (!userId || !token) {
-
-        console.log(
-          '❌ NO AUTH FOUND',
+        const res = await api.get(
+          `/music?userId=${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
 
-        window.location.href =
-          '/login';
+        console.log(
+  'RELEASES API:',
+  res.data
+);
 
-        return;
-      }
+        if (!Array.isArray(res.data)) {
 
-      //////////////////////////////////////////////////
-      // 🔥 FETCH MUSIC
-      //////////////////////////////////////////////////
-      const res = await api.get(
-        `/music?userId=${userId}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        },
-      );
+  console.log(
+    'Invalid releases response:',
+    res.data
+  );
 
-      console.log(
-        '🔥 MUSIC RESPONSE:',
-        res.data,
-      );
+  setLoading(false);
 
-      //////////////////////////////////////////////////
-      // 🔥 INVALID RESPONSE
-      //////////////////////////////////////////////////
-      if (!Array.isArray(res.data)) {
+  return;
+}
 
-        setReleases([]);
+const mapped = res.data.map((m) => ({
+
+  id:
+    m._id ||
+    m.id,
+
+  title:
+     String(
+    m.title ||
+    'Untitled',
+     ),
+
+  artistName:
+    m.artistName ||
+    m.artist ||
+    'Unknown Artist',
+
+  featuredArtists:
+    Array.isArray(m.featuredArtists)
+      ? m.featuredArtists
+      : [],
+
+  songwriters:
+    m.songwriters ||
+    m.songwriter ||
+    null,
+
+  producer:
+    m.producer || null,
+
+  genre:
+    m.genre ||
+    m.primaryGenre ||
+    null,
+
+  subgenre:
+    m.subgenre ||
+    m.secondaryGenre ||
+    null,
+
+  language:
+    m.language || null,
+
+  labelName:
+    m.labelName || null,
+
+  copyright:
+    m.copyright || null,
+
+  releaseDate:
+    m.releaseDate ||
+    m.date ||
+    null,
+
+  isrc:
+    m.isrc || null,
+
+  upc:
+    m.upc || null,
+
+status:
+  String(
+    m.status ||
+    'pending'
+  ).toLowerCase(),
+
+  coverUrl:
+    m.coverUrl ||
+    m.cover ||
+    m.artwork ||
+    m.image ||
+    m.thumbnail ||
+    null,
+
+ fileUrl:
+  m.fileUrl?.startsWith('http')
+    ? m.fileUrl
+    : fixUrl(
+        m.fileUrl ||
+        m.audioUrl ||
+        m.trackUrl ||
+        m.song ||
+        m.audio ||
+        m.music ||
+        '',
+      ),
+
+}));
+
+        setReleases(mapped);
 
         setLoading(false);
+      } catch (err) {
+        console.log(err);
 
-        return;
+        setLoading(false);
       }
-
-      //////////////////////////////////////////////////
-      // 🔥 MAP DATA
-      //////////////////////////////////////////////////
-      const mapped = res.data.map(
-        (m) => ({
-          id: m.id,
-
-          title:
-            m.title ||
-            'Untitled',
-
-          artistName:
-            m.artistName ||
-            m.artist ||
-            'Unknown Artist',
-
-          status:
-            m.status ||
-            'processing',
-
-          coverUrl:
-            m.coverUrl ||
-            m.cover ||
-            null,
-
-          fileUrl:
-            m.fileUrl ||
-            m.cloudinaryUrl ||
-            null,
-        }),
-      );
-
-      console.log(
-        '🔥 FINAL RELEASES:',
-        mapped,
-      );
-
-      setReleases(mapped);
-
-      setLoading(false);
-
-    } catch (err) {
-
-      console.log(
-        '❌ FETCH RELEASES ERROR',
-      );
-
-      console.log(err);
-
-      setLoading(false);
-    }
-  };
+    };
 
   //////////////////////////////////////////////////
-  // 🔥 INITIAL LOAD
+  // 🔥 LOAD
   //////////////////////////////////////////////////
   useEffect(() => {
     fetchReleases();
 
-    const interval = setInterval(() => {
-      fetchReleases();
-    }, 5000);
+    const interval =
+      setInterval(() => {
+        fetchReleases();
+      }, 30000);
 
     return () =>
       clearInterval(interval);
@@ -261,17 +360,21 @@ export default function MyReleases() {
   // 🔥 SOCKET
   //////////////////////////////////////////////////
   useEffect(() => {
-    const socket = io(BASE_URL);
+    const socket = io(
+      BASE_URL,
+    );
 
     socket.on(
       'release:update',
       (data) => {
         setReleases((prev) =>
           prev.map((r) =>
-            r.id === data.releaseId
+            r.id ===
+            data.releaseId
               ? {
                   ...r,
-                  status: data.status,
+                  status:
+                    data.status,
                 }
               : r,
           ),
@@ -287,40 +390,37 @@ export default function MyReleases() {
   //////////////////////////////////////////////////
   // 🔥 DELETE
   //////////////////////////////////////////////////
-  const handleDelete = async (
-    id,
-  ) => {
+  const handleDelete =
+    async (id) => {
+      const token =
+        localStorage.getItem(
+          'token',
+        );
 
-    const token =
-      localStorage.getItem('token');
+      const ok =
+        window.confirm(
+          t.confirmDelete,
+        );
 
-    const ok = window.confirm(
-      'Delete this release?',
-    );
+      if (!ok) return;
 
-    if (!ok) return;
-
-    try {
-
-      await api.delete(
-        `/music/${id}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
+      try {
+        await api.delete(
+          `/music/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
+        );
 
-      fetchReleases();
+        fetchReleases();
+      } catch (err) {
+        console.log(err);
 
-    } catch (err) {
-
-      console.log(err);
-
-      alert('Delete failed ❌');
-    }
-  };
+        alert(t.deleteFailed);
+      }
+    };
 
   //////////////////////////////////////////////////
   // 🔥 FILTER
@@ -331,15 +431,73 @@ export default function MyReleases() {
       if (filter === 'all') {
         return true;
       }
+if (filter === 'pending') {
+  return r.status === 'pending';
+}
 
-      if (filter === 'pending') {
-        return [
-          'pending',
-          'processing',
-        ].includes(r.status);
+      if (
+        filter ===
+        'processing'
+      ) {
+        return (
+          r.status ===
+          'processing'
+        );
       }
 
-      return r.status === filter;
+      if (
+        filter ===
+        'submitted'
+      ) {
+        return (
+          r.status ===
+          'submitted'
+        );
+      }
+
+      if (
+        filter ===
+        'approved'
+      ) {
+        return (
+          r.status ===
+          'approved'
+        );
+      }
+
+      if (filter === 'live') {
+        return (
+          r.status === 'live'
+        );
+      }
+
+      if (filter === 'draft') {
+        return (
+          r.status === 'draft'
+        );
+      }
+
+      if (
+        filter ===
+        'delivered'
+      ) {
+        return (
+          r.status ===
+          'delivered'
+        );
+      }
+
+      if (
+        filter ===
+        'failed'
+      ) {
+        return (
+          r.status ===
+          'failed'
+        );
+      }
+
+      return true;
     });
 
   //////////////////////////////////////////////////
@@ -347,140 +505,222 @@ export default function MyReleases() {
   //////////////////////////////////////////////////
   return (
     <div style={styles.container}>
-
-      {/* 🔥 BACKGROUND GLOW */}
       <div style={styles.glow1} />
 
       <div style={styles.glow2} />
 
-      {/* 🔥 HEADER */}
+      {/* HEADER */}
       <div style={styles.header}>
-
         <div style={styles.logoWrap}>
-
           <img
             src={logo}
-            alt="Kasuku Logo"
+            alt="Kasuku"
             style={styles.logo}
           />
 
           <div>
             <h1 style={styles.title}>
-              My Releases
+              {t.title}
             </h1>
 
             <p style={styles.subtitle}>
-              Track all your published
-              and pending releases
+              {t.subtitle}
             </p>
           </div>
         </div>
       </div>
 
-      {/* 🔥 FILTERS */}
+      {/* FILTERS */}
       <div style={styles.tabs}>
         {[
           'pending',
+          'processing',
+          'submitted',
           'approved',
           'live',
           'draft',
+          'delivered',
+          'failed',
           'all',
-        ].map((t) => (
+        ].map((item) => (
           <button
-            key={t}
+            key={item}
             onClick={() =>
-              setFilter(t)
+              setFilter(item)
             }
             style={{
               ...styles.tab,
 
               background:
-                filter === t
+                filter === item
                   ? 'linear-gradient(90deg,#ff003c,#7c3aed)'
                   : 'rgba(255,255,255,0.05)',
             }}
           >
-            {t.toUpperCase()}
+            {t[item]}
           </button>
         ))}
       </div>
 
-      {/* 🔥 LOADING */}
+      {/* LOADING */}
       {loading && (
         <div style={styles.empty}>
           <img
             src={logo}
             alt="Kasuku"
-            style={styles.emptyLogo}
+            style={
+              styles.emptyLogo
+            }
           />
 
-          <h2>Loading releases...</h2>
+          <h2>{t.loading}</h2>
         </div>
       )}
 
-      {/* 🔥 EMPTY */}
+      {/* EMPTY */}
       {!loading &&
-        filtered.length === 0 && (
-          <div style={styles.empty}>
+        filtered.length ===
+          0 && (
+          <div
+            style={styles.empty}
+          >
             <img
               src={logo}
               alt="Kasuku"
-              style={styles.emptyLogo}
+              style={
+                styles.emptyLogo
+              }
             />
 
             <h2>
-              No releases found
+              {t.emptyTitle}
             </h2>
 
             <p>
-              Upload music and it
-              will appear here
-              automatically
+              {
+                t.emptySubtitle
+              }
             </p>
           </div>
         )}
 
-      {/* 🔥 RELEASES */}
+      {/* RELEASES */}
       {filtered.map((r) => (
         <div
           key={r.id}
           style={styles.card}
         >
-
-          {/* 🔥 COVER */}
+          {/* COVER */}
           <img
-            src={
-              r.coverUrl
-                ? fixUrl(
-                    r.coverUrl,
-                  )
-                : logo
-            }
+  src={fixUrl(
+    r.coverUrl,
+  )}
+
+  onError={(e) => {
+    e.currentTarget.src =
+      logo;
+  }}
             alt={r.title}
             style={styles.cover}
           />
 
-          {/* 🔥 INFO */}
-          <div style={{ flex: 1 }}>
-
-            <h2 style={styles.songTitle}>
+          {/* INFO */}
+          <div style={styles.info}>
+            <h2
+              style={
+                styles.songTitle
+              }
+            >
               {r.title}
             </h2>
 
-            <p style={styles.artist}>
-              {r.artistName}
-            </p>
+           {/* FEATURED ARTISTS */}
+{r.featuredArtists?.length > 0 && (
+  <p style={styles.meta}>
+    Featuring:{' '}
+    {r.featuredArtists
+      .map((a) =>
+  typeof a === 'string'
+    ? a
+    : a?.name
+)
+      .join(', ')}
+  </p>
+)}
 
-            {/* 🔥 AUDIO */}
-            {r.fileUrl && (
-              <AudioPlayer
-                src={fixUrl(
-                  r.fileUrl,
-                )}
-              />
+{/* SONGWRITERS */}
+<p style={styles.meta}>
+  Songwriter:{' '}
+  {r.songwriters || 'Unknown'}
+</p>
+
+{/* LANGUAGE */}
+<p style={styles.meta}>
+  Language:{' '}
+  {r.language || 'No Language'}
+</p>
+
+{/* ISRC */}
+<p style={styles.meta}>
+  ISRC:{' '}
+  {r.isrc || 'No ISRC'}
+</p>
+
+{/* UPC */}
+<p style={styles.meta}>
+  UPC:{' '}
+  {r.upc || 'No UPC'}
+</p>
+
+{/* GENRE */}
+<p style={styles.meta}>
+  Genre:{' '}
+  {r.genre || 'No Genre'}
+</p>
+
+{/* SUBGENRE */}
+<p style={styles.meta}>
+  Subgenre:{' '}
+  {r.subgenre || 'No Subgenre'}
+</p>
+
+{/* PRODUCER */}
+<p style={styles.meta}>
+  Producer:{' '}
+  {r.producer || 'Unknown'}
+</p>
+
+{/* LABEL */}
+<p style={styles.meta}>
+  Label:{' '}
+  {r.labelName || 'Independent'}
+</p>
+
+{/* COPYRIGHT */}
+<p style={styles.meta}>
+  Copyright:{' '}
+  {r.copyright || 'Not Provided'}
+</p>
+
+{/* RELEASE DATE */}
+<p style={styles.meta}>
+  Release Date:{' '}
+  {r.releaseDate || 'Not Set'}
+</p>
+
+            {/* AUDIO */}
+
+{console.log("AUDIO URL:", r.fileUrl)}
+
+           {r.fileUrl &&
+ r.fileUrl !== 'null' &&
+ r.fileUrl !== 'undefined' && (
+               <AudioPlayer
+               src={r.fileUrl}
+               />
             )}
 
-            {/* 🔥 STATUS */}
+            {/* STATUS */}
             <div
               style={{
                 marginTop: 16,
@@ -491,40 +731,55 @@ export default function MyReleases() {
                   r.status,
                 )}
               >
-                {[
-                  'pending',
-                  'processing',
-                ].includes(
-                  r.status,
-                ) &&
-                  '⏳ Pending'}
+                {r.status ===
+                  'pending' &&
+                  `⏳ ${t.pending}`}
+
+                {r.status ===
+                  'processing' &&
+                  `⚡ ${t.processing}`}
+
+                {r.status ===
+                  'submitted' &&
+                  `📤 ${t.submitted}`}
 
                 {r.status ===
                   'approved' &&
-                  '✅ Approved'}
+                  `✅ ${t.approved}`}
 
                 {r.status ===
                   'live' &&
-                  '🚀 Live'}
+                  `🚀 ${t.live}`}
 
                 {r.status ===
                   'draft' &&
-                  '📝 Draft'}
+                  `📝 ${t.draft}`}
+
+                {r.status ===
+                  'delivered' &&
+                  `🎵 ${t.delivered}`}
+
+                {r.status ===
+                  'failed' &&
+                  `❌ ${t.failed}`}
               </span>
             </div>
 
-            {/* 🔥 ACTIONS */}
+            {/* ACTIONS */}
             <div
-              style={styles.actions}
+              style={
+                styles.actions
+              }
             >
-
               <button
                 onClick={() =>
                   (window.location.href = `/edit/${r.id}`)
                 }
-                style={styles.editBtn}
+                style={
+                  styles.editBtn
+                }
               >
-                ✏️ Edit
+                {t.edit}
               </button>
 
               <button
@@ -533,11 +788,12 @@ export default function MyReleases() {
                     r.id,
                   )
                 }
-                style={styles.deleteBtn}
+                style={
+                  styles.deleteBtn
+                }
               >
-                🗑 Delete
+                {t.delete}
               </button>
-
             </div>
           </div>
         </div>
@@ -551,15 +807,16 @@ export default function MyReleases() {
 //////////////////////////////////////////////////
 const styles = {
   container: {
-    position: 'relative',
-
     minHeight: '100vh',
 
-    padding: 25,
+    padding:
+      'clamp(16px,4vw,32px)',
+
+    color: '#ffffff',
 
     overflow: 'hidden',
 
-    color: '#ffffff',
+    position: 'relative',
 
     background: `
       radial-gradient(circle at top left,
@@ -579,16 +836,28 @@ const styles = {
     `,
   },
 
+ meta: {
+  margin: 0,
+
+  color: '#bdbdbd',
+
+  fontSize: 13,
+
+  lineHeight: 1.3,
+
+  wordBreak: 'break-word',
+},
+
   glow1: {
     position: 'absolute',
 
-    top: -150,
+    top: -120,
 
     left: -120,
 
-    width: 400,
+    width: 350,
 
-    height: 400,
+    height: 350,
 
     borderRadius: '50%',
 
@@ -601,18 +870,18 @@ const styles = {
   glow2: {
     position: 'absolute',
 
-    bottom: -150,
+    bottom: -120,
 
     right: -120,
 
-    width: 400,
+    width: 350,
 
-    height: 400,
+    height: 350,
 
     borderRadius: '50%',
 
     background:
-      'rgba(255,0,60,0.16)',
+      'rgba(255,0,60,0.18)',
 
     filter: 'blur(120px)',
   },
@@ -622,7 +891,7 @@ const styles = {
 
     zIndex: 2,
 
-    marginBottom: 35,
+    marginBottom: 30,
   },
 
   logoWrap: {
@@ -630,30 +899,28 @@ const styles = {
 
     alignItems: 'center',
 
-    gap: 18,
+    gap: 16,
+
+    flexWrap: 'wrap',
   },
 
   logo: {
-    width: 90,
+    width:
+      'clamp(60px,8vw,90px)',
 
-    height: 90,
+    height:
+      'clamp(60px,8vw,90px)',
 
     objectFit: 'contain',
-
-    display: 'block',
-
-    filter:
-      'drop-shadow(0 0 25px rgba(255,0,60,0.45))',
   },
 
   title: {
     margin: 0,
 
-    fontSize: 40,
+    fontSize:
+      'clamp(30px,5vw,52px)',
 
-    fontWeight: '900',
-
-    color: '#ffffff',
+    fontWeight: 900,
   },
 
   subtitle: {
@@ -661,14 +928,11 @@ const styles = {
 
     color: '#aaaaaa',
 
-    fontSize: 14,
+    fontSize:
+      'clamp(12px,2vw,15px)',
   },
 
   tabs: {
-    position: 'relative',
-
-    zIndex: 2,
-
     display: 'flex',
 
     gap: 12,
@@ -683,7 +947,7 @@ const styles = {
 
     color: '#ffffff',
 
-    padding: '11px 20px',
+    padding: '12px 20px',
 
     borderRadius: 14,
 
@@ -693,90 +957,86 @@ const styles = {
 
     fontSize: 13,
 
-    backdropFilter: 'blur(10px)',
-
-    transition: '0.2s',
-
-    boxShadow:
-      '0 0 20px rgba(124,58,237,0.12)',
+    minWidth: 90,
   },
 
   empty: {
-    position: 'relative',
-
-    zIndex: 2,
-
     textAlign: 'center',
 
-    marginTop: 100,
-
-    color: '#888888',
+    marginTop: 90,
   },
 
   emptyLogo: {
     width: 120,
 
     marginBottom: 20,
-
-    opacity: 0.95,
-
-    filter:
-      'drop-shadow(0 0 25px rgba(255,0,60,0.4))',
   },
+card: {
+  display: 'flex',
 
-  card: {
-    position: 'relative',
+  flexWrap: 'wrap',
 
-    zIndex: 2,
+  alignItems: 'flex-start',
 
-    display: 'flex',
+  gap: 18,
 
-    gap: 20,
+  padding: 18,
 
-    padding: 22,
+  marginBottom: 20,
 
-    marginBottom: 24,
+  borderRadius: 20,
 
-    borderRadius: 22,
+  background:
+    'rgba(15,15,15,0.88)',
 
-    background:
-      'rgba(15,15,15,0.88)',
+  border:
+    '1px solid rgba(255,255,255,0.06)',
 
-    border:
-      '1px solid rgba(255,255,255,0.06)',
+  backdropFilter:
+    'blur(12px)',
 
-    boxShadow: `
-      0 0 30px rgba(124,58,237,0.12),
-      0 0 40px rgba(255,0,60,0.10)
-    `,
+  width: '100%',
 
-    backdropFilter:
-      'blur(12px)',
-  },
+  boxSizing: 'border-box',
+},
 
   cover: {
-    width: 150,
+    width: 160,
 
-    height: 150,
+    height: 160,
+
+    minWidth: 160,
 
     borderRadius: 18,
 
     objectFit: 'cover',
 
     background: '#111111',
-
-    border:
-      '1px solid rgba(255,255,255,0.08)',
   },
+
+ info: {
+  flex: 1,
+
+  width: '100%',
+
+  display: 'flex',
+
+  flexDirection: 'column',
+
+  gap: 3,
+},
 
   songTitle: {
     margin: 0,
 
     marginBottom: 8,
 
-    fontSize: 26,
+    fontSize:
+      'clamp(24px,4vw,34px)',
 
-    fontWeight: '800',
+    fontWeight: 800,
+
+    wordBreak: 'break-word',
   },
 
   artist: {
@@ -784,7 +1044,22 @@ const styles = {
 
     color: '#aaaaaa',
 
-    fontSize: 15,
+    fontSize:
+      'clamp(13px,2vw,16px)',
+  },
+
+  playerWrap: {
+    width: '100%',
+
+    marginTop: 12,
+  },
+
+  wave: {
+    width: '100%',
+
+    overflow: 'hidden',
+
+    borderRadius: 14,
   },
 
   playBtn: {
@@ -796,7 +1071,7 @@ const styles = {
 
     cursor: 'pointer',
 
-    fontWeight: '700',
+    fontWeight: 700,
 
     borderRadius: 12,
 
@@ -804,9 +1079,6 @@ const styles = {
 
     background:
       'linear-gradient(90deg,#ff003c,#7c3aed)',
-
-    boxShadow:
-      '0 0 20px rgba(255,0,60,0.35)',
   },
 
   actions: {
@@ -814,7 +1086,9 @@ const styles = {
 
     gap: 12,
 
-    marginTop: 18,
+    flexWrap: 'wrap',
+
+    marginTop: 20,
   },
 
   editBtn: {
@@ -828,7 +1102,7 @@ const styles = {
 
     borderRadius: 12,
 
-    padding: '10px 18px',
+    padding: '12px 18px',
 
     background:
       'linear-gradient(90deg,#7c3aed,#5b21b6)',
@@ -845,7 +1119,7 @@ const styles = {
 
     borderRadius: 12,
 
-    padding: '10px 18px',
+    padding: '12px 18px',
 
     background:
       'linear-gradient(90deg,#ff003c,#dc2626)',
@@ -855,19 +1129,35 @@ const styles = {
 //////////////////////////////////////////////////
 // 🔥 STATUS STYLE
 //////////////////////////////////////////////////
-function getStatusStyle(status) {
-
-  let bg = '#444444';
+function getStatusStyle(
+  status,
+) {
+  let bg = '#444';
 
   if (
-    status === 'pending' ||
-    status === 'processing'
+    status === 'pending'
   ) {
     bg =
       'linear-gradient(90deg,#f59e0b,#ff8800)';
   }
 
-  if (status === 'approved') {
+  if (
+    status === 'processing'
+  ) {
+    bg =
+      'linear-gradient(90deg,#fb923c,#ea580c)';
+  }
+
+  if (
+    status === 'submitted'
+  ) {
+    bg =
+      'linear-gradient(90deg,#3b82f6,#2563eb)';
+  }
+
+  if (
+    status === 'approved'
+  ) {
     bg =
       'linear-gradient(90deg,#22c55e,#16a34a)';
   }
@@ -880,6 +1170,20 @@ function getStatusStyle(status) {
   if (status === 'draft') {
     bg =
       'linear-gradient(90deg,#666,#444)';
+  }
+
+  if (
+    status === 'delivered'
+  ) {
+    bg =
+      'linear-gradient(90deg,#8b5cf6,#7c3aed)';
+  }
+
+  if (
+    status === 'failed'
+  ) {
+    bg =
+      'linear-gradient(90deg,#dc2626,#991b1b)';
   }
 
   return {
@@ -896,5 +1200,7 @@ function getStatusStyle(status) {
     fontWeight: 'bold',
 
     fontSize: 12,
+
+    textTransform: 'capitalize',
   };
 }
