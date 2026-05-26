@@ -11,6 +11,7 @@ import {
 import logo from '../assets/Kasuku-logo.png';
 
 export default function Sidebar() {
+  alert('REAL SIDEBAR LOADED');
   const navigate =
     useNavigate();
 
@@ -79,7 +80,13 @@ export default function Sidebar() {
   }, []);
 
   const isAdmin =
-    user?.role === 'admin';
+  user?.role?.toLowerCase() === 'admin';
+
+  console.log(
+  'ADMIN CHECK:',
+  isAdmin,
+  user
+);
 
   // =========================
   // LOGOUT
@@ -225,9 +232,12 @@ export default function Sidebar() {
     },
   ];
 
-  const menu = isAdmin
+  const menu = [
+  ...(isAdmin
     ? adminMenu
-    : userMenu;
+    : userMenu
+  ),
+];
 
   // =========================
   // NAVIGATE

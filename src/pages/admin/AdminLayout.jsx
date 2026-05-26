@@ -54,34 +54,68 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* 🔥 ALWAYS VISIBLE */}
-        <div
-          onClick={() => navigate('/dashboard')}
-          style={styles.backBtn}
-        >
-          ← Back to Dashboard
-        </div>
+       <div>
+
+  <div
+    onClick={() => navigate('/dashboard')}
+    style={styles.backBtn}
+  >
+    ← Back to Dashboard
+  </div>
+
+  <div
+    onClick={() => {
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      window.location.href = '/login';
+
+    }}
+    style={styles.logoutBtn}
+  >
+    Sign Out
+  </div>
+
+</div>
 
       </div>
 
       <div style={styles.content}>
-        {children}
+        <Outlet />
       </div>
     </div>
   );
 }
 
 const styles = {
-  layout: { display: 'flex', minHeight: '100vh', background: '#0b0f19', color: '#fff' },
+ layout: {
+  display: 'flex',
+  height: '100vh',
+  overflow: 'hidden',
+  background: '#0b0f19',
+  color: '#fff',
+},
 
   sidebar: {
-    width: 240,
-    background: '#000',
-    padding: 20,
-    borderRight: '1px solid #1f2937',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between', // 🔥 KEY FIX
-  },
+  width: 240,
+  background: '#000',
+  padding: 20,
+  borderRight: '1px solid #1f2937',
+
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  bottom: 0,
+
+  overflowY: 'auto',
+
+  zIndex: 1000,
+},
 
   logoContainer: {
     display: 'flex',
@@ -111,5 +145,23 @@ const styles = {
     textAlign: 'center',
   },
 
-  content: { flex: 1, padding: 30 },
+  logoutBtn: {
+  padding: 12,
+  borderRadius: 10,
+  cursor: 'pointer',
+  background: '#111827',
+  textAlign: 'center',
+  marginTop: 12,
+  border: '1px solid #374151',
+},
+
+ content: {
+  flex: 1,
+  marginLeft: 240,
+  padding: 30,
+
+  height: '100vh',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+},
 };

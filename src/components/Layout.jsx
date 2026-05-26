@@ -188,9 +188,11 @@ export default function Layout({
                 : '',
 
             role:
-              savedUser.role ||
-              payload.role ||
-              'user',
+  (
+    savedUser.role ||
+    payload.role ||
+    'user'
+  ).toLowerCase(),
 
             plan:
               normalizedPlan,
@@ -200,11 +202,9 @@ export default function Layout({
   normalizedPlan === 'artist' ||
   normalizedPlan === 'pro',
 
-            isAdmin:
-              savedUser.role ===
-                'admin' ||
-              payload.role ===
-                'admin',
+        isAdmin:
+  savedUser.role?.toLowerCase() === 'admin' ||
+  payload.role?.toLowerCase() === 'admin',
 
           });
 
@@ -371,73 +371,116 @@ export default function Layout({
   // MENU
   // =========================
 
-  const menu = [
+ const userMenu = [
 
-    {
-      name:
-        t?.dashboard ||
-        'Dashboard',
-      icon: '📊',
-      path: '/dashboard',
-    },
+  {
+    name: t?.dashboard || 'Dashboard',
+    icon: '📊',
+    path: '/dashboard',
+  },
 
-    {
-      name:
-        t?.upload ||
-        'Upload',
-      icon: '⬆️',
-      path: '/upload',
-    },
+  {
+    name: t?.upload || 'Upload',
+    icon: '⬆️',
+    path: '/upload',
+  },
 
-    {
-      name:
-        t?.releases ||
-        'Releases',
-      icon: '🎶',
-      path: '/my-music',
-    },
+  {
+    name: t?.releases || 'Releases',
+    icon: '🎶',
+    path: '/my-music',
+  },
 
-    {
-      name:
-        t?.analytics ||
-        'Analytics',
-      icon: '📈',
-      path: '/analytics',
-    },
+  {
+    name: t?.analytics || 'Analytics',
+    icon: '📈',
+    path: '/analytics',
+  },
 
-    {
-      name:
-        t?.royalties ||
-        'Royalties',
-      icon: '💰',
-      path: '/royalties',
-    },
+  {
+    name: t?.royalties || 'Royalties',
+    icon: '💰',
+    path: '/royalties',
+  },
 
-    {
-      name:
-        t?.withdraw ||
-        'Withdraw',
-      icon: '💸',
-      path: '/withdraw',
-    },
+  {
+    name: t?.withdraw || 'Withdraw',
+    icon: '💸',
+    path: '/withdraw',
+  },
 
-    {
-      name:
-        t?.profile ||
-        'Profile',
-      icon: '👤',
-      path: '/profile',
-    },
+  {
+    name: t?.profile || 'Profile',
+    icon: '👤',
+    path: '/profile',
+  },
 
-    {
-      name:
-        t?.settings ||
-        'Settings',
-      icon: '⚙️',
-      path: '/settings',
-    },
+  {
+    name: t?.settings || 'Settings',
+    icon: '⚙️',
+    path: '/settings',
+  },
 
-  ];
+];
+
+const adminMenu = [
+
+  {
+    name: 'Users',
+    icon: '👥',
+    path: '/admin/users',
+  },
+
+  {
+    name: 'Approvals',
+    icon: '✅',
+    path: '/admin/approvals',
+  },
+
+  {
+    name: 'Revenue',
+    icon: '💵',
+    path: '/admin/revenue',
+  },
+
+  {
+    name: 'Emails',
+    icon: '📧',
+    path: '/admin/email',
+  },
+
+];
+
+const menu = user?.isAdmin
+  ? [
+      ...userMenu,
+
+      // ADMIN ACCESS
+      {
+        name: 'Users',
+        icon: '👥',
+        path: '/admin/users',
+      },
+
+      {
+        name: 'Approvals',
+        icon: '✅',
+        path: '/admin/approvals',
+      },
+
+      {
+        name: 'Revenue',
+        icon: '💵',
+        path: '/admin/revenue',
+      },
+
+      {
+        name: 'Emails',
+        icon: '📧',
+        path: '/admin/email',
+      },
+    ]
+  : userMenu;
 
   return (
 

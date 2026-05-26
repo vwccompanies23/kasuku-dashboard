@@ -84,7 +84,7 @@ export default function Profile() {
     try {
 
       const res =
-        await api.get('/users/me');
+        await api.get('/profiles/me');
 
       const normalized =
         normalizeUser(
@@ -158,7 +158,7 @@ export default function Profile() {
           setSaving(true);
 
           await api.post(
-            '/users/update',
+            '/profiles/update',
             user
           );
 
@@ -193,72 +193,99 @@ export default function Profile() {
   }, [user]);
 
   // =========================
-  // AVATAR UPLOAD
-  // =========================
+// AVATAR UPLOAD
+// =========================
 
-  const uploadAvatar =
-    async (e: any) => {
+const uploadAvatar =
+  async (e: any) => {
+
+    try {
 
       const file =
         e.target.files?.[0];
 
       if (!file) return;
 
+      setSaving(true);
+
       const formData =
         new FormData();
 
       formData.append(
         'file',
-        file
+        file,
       );
 
-      try {
-
-        const res =
-          await api.post(
-            '/users/upload-avatar',
-            formData
-          );
-
-        const avatarUrl =
-          res.data?.url || '';
-
-        const updatedUser = {
-
-          ...user,
-
-          avatar: avatarUrl,
-
-        };
-
-        setUser(
-          updatedUser
+      const res =
+        await api.post(
+          '/profiles/upload-avatar',
+          formData,
+          {
+            headers: {
+              'Content-Type':
+                'multipart/form-data',
+            },
+          },
         );
 
-        localStorage.setItem(
-          'user',
-          JSON.stringify(
-            updatedUser
-          )
-        );
+      const avatarUrl =
+        res?.data?.url || '';
 
-        window.dispatchEvent(
-          new Event(
-            'authChanged'
-          )
-        );
+      if (!avatarUrl) {
 
-      } catch (err) {
-
-        console.error(err);
-
-        alert(
-          'Upload failed ❌'
+        throw new Error(
+          'No avatar returned',
         );
 
       }
 
-    };
+      const updatedUser = {
+
+        ...user,
+
+        avatar: avatarUrl,
+
+      };
+
+      setUser(
+        updatedUser,
+      );
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify(
+          updatedUser,
+        ),
+      );
+
+      window.dispatchEvent(
+        new Event(
+          'authChanged',
+        ),
+      );
+
+      alert(
+        'Profile image updated ✅',
+      );
+
+    } catch (err) {
+
+      console.log(
+        'UPLOAD ERROR:',
+        err,
+      );
+
+      alert(
+        'Upload failed ❌',
+      );
+
+    } finally {
+
+      setSaving(false);
+
+    }
+
+  };
 
   // =========================
   // TOGGLE REFERRAL
@@ -346,13 +373,8 @@ const getPlanName = () => {
   // =========================
 
   const avatarSrc =
-    user?.avatar
-      ? user.avatar.startsWith(
-          'http'
-        )
-        ? user.avatar
-        : `https://kasuku-backend.onrender.com${user.avatar}`
-      : 'https://via.placeholder.com/100';
+  user?.avatar ||
+  'https://via.placeholder.com/100';
 
   return (
 

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-// ALL YOUR IMPORTS (UNCHANGED)
+// ALL YOUR IMPORTS
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Success from './pages/Success';
@@ -26,7 +26,6 @@ import Payment from './pages/Payment';
 
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
-import Settings from './pages/Settings';
 import Landing from './pages/Landing';
 import ForgotPassword from './pages/ForgotPassword';
 import Collaborators from './pages/Collaborators';
@@ -39,7 +38,7 @@ import Help from './pages/Help';
 import Pricing from './pages/Pricing';
 import About from './pages/About';
 
-// ADMIN (UNCHANGED)
+// ADMIN
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
@@ -58,6 +57,24 @@ import AdminPayoutHistory from './pages/admin/AdminPayoutHistory';
 import AdminFinanceDashboard from './pages/admin/AdminFinanceDashboard';
 import AdminTax from './pages/admin/AdminTax';
 import AdminAlbums from './pages/admin/AdminAlbums';
+
+import AdminCopyrightClaims
+from './pages/admin/AdminCopyrightClaims';
+
+import AdminCopyrightReviewing
+from './pages/admin/AdminCopyrightReviewing';
+
+import AdminArtistVerifications
+from './pages/admin/AdminArtistVerifications';
+
+import AdminCopyrightApproved
+from './pages/admin/AdminCopyrightApproved';
+
+import AdminCopyrightRejected
+from './pages/admin/AdminCopyrightRejected';
+
+import AdminCopyrightStatus
+from './pages/admin/AdminCopyrightStatus';
 
 // SETTINGS
 import Subscription from './settings/Subscription';
@@ -83,310 +100,780 @@ import CommunityGuidelines from './pages/CommunityGuidelines';
 import CookiePolicy from './pages/CookiePolicy';
 import CopyrightClaim from './pages/CopyrightClaim';
 import ContentRules from './pages/ContentRules';
-import VerifyArtist
-from './pages/VerifyArtist';
-
-import AdminCopyrightClaims
-from './pages/admin/AdminCopyrightClaims';
-import AdminCopyrightReviewing
-from './pages/admin/AdminCopyrightReviewing';
-
-import AdminArtistVerifications
-from './pages/admin/AdminArtistVerifications';
-
-
-import AdminCopyrightApproved
-from './pages/admin/AdminCopyrightApproved';
-
-import AdminCopyrightRejected
-from './pages/admin/AdminCopyrightRejected';
-import AdminCopyrightStatus from './pages/admin/AdminCopyrightStatus';
+import VerifyArtist from './pages/VerifyArtist';
 
 function App() {
 
-  // ✅ FIX: initialize correctly (prevents refresh logout)
-  const [isAuth, setIsAuth] = useState(() => {
-    const token = localStorage.getItem('token');
-    return !!(token && token !== 'undefined' && token !== 'null');
-  });
+  // =========================
+  // AUTH STATE
+  // =========================
 
-  // ✅ FIX: proper auth sync
+  const [isAuth, setIsAuth] =
+    useState(() => {
+
+      const token =
+        localStorage.getItem('token');
+
+      return !!(
+        token &&
+        token !== 'undefined' &&
+        token !== 'null'
+      );
+
+    });
+
+  // =========================
+  // AUTH SYNC
+  // =========================
+
   useEffect(() => {
-    const syncAuth = () => {
-      const token = localStorage.getItem('token');
 
-      if (token && token !== 'undefined' && token !== 'null') {
+    const syncAuth = () => {
+
+      const token =
+        localStorage.getItem('token');
+
+      if (
+        token &&
+        token !== 'undefined' &&
+        token !== 'null'
+      ) {
+
         setIsAuth(true);
+
       } else {
+
         setIsAuth(false);
+
       }
+
     };
 
     syncAuth();
 
-    window.addEventListener('storage', syncAuth);
+    window.addEventListener(
+      'storage',
+      syncAuth
+    );
+
+    window.addEventListener(
+      'authChanged',
+      syncAuth
+    );
 
     return () => {
-      window.removeEventListener('storage', syncAuth);
+
+      window.removeEventListener(
+        'storage',
+        syncAuth
+      );
+
+      window.removeEventListener(
+        'authChanged',
+        syncAuth
+      );
+
     };
+
   }, []);
 
-  // ✅ activity tracking
+  // =========================
+  // USER ACTIVITY
+  // =========================
+
   useEffect(() => {
+
     const updateActivity = () => {
-      localStorage.setItem('lastActivity', Date.now().toString());
+
+      localStorage.setItem(
+        'lastActivity',
+        Date.now().toString()
+      );
+
     };
 
-    window.addEventListener('click', updateActivity);
-    window.addEventListener('keydown', updateActivity);
+    window.addEventListener(
+      'click',
+      updateActivity
+    );
+
+    window.addEventListener(
+      'keydown',
+      updateActivity
+    );
 
     updateActivity();
 
     return () => {
-      window.removeEventListener('click', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
+
+      window.removeEventListener(
+        'click',
+        updateActivity
+      );
+
+      window.removeEventListener(
+        'keydown',
+        updateActivity
+      );
+
     };
+
   }, []);
 
+  // =========================
+  // CRISP CHAT
+  // =========================
+
   useEffect(() => {
-  window.$crisp = [];
-  window.CRISP_WEBSITE_ID = "a9201a94-f3a2-460d-ae42-6b796c0b3ee2";
 
-  const d = document;
-  const s = d.createElement("script");
+    window.$crisp = [];
 
-  s.src = "https://client.crisp.chat/l.js";
-  s.async = true;
+    window.CRISP_WEBSITE_ID =
+      'a9201a94-f3a2-460d-ae42-6b796c0b3ee2';
 
-  d.getElementsByTagName("head")[0].appendChild(s);
-}, []);
+    const d = document;
 
-  // ✅ FIXED AUTO LOGOUT
+    const s =
+      d.createElement('script');
+
+    s.src =
+      'https://client.crisp.chat/l.js';
+
+    s.async = true;
+
+    d
+      .getElementsByTagName('head')[0]
+      .appendChild(s);
+
+  }, []);
+
+  // =========================
+  // AUTO LOGOUT
+  // =========================
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      const last = localStorage.getItem('lastActivity');
 
-      if (!last) return;
+    const interval =
+      setInterval(() => {
 
-      const inactiveTime = Date.now() - Number(last);
+        const last =
+          localStorage.getItem(
+            'lastActivity'
+          );
 
-      if (inactiveTime > 60 * 60 * 1000) {
-        localStorage.removeItem('token');
+        if (!last) return;
 
-        localStorage.removeItem('user');
+        const inactiveTime =
+          Date.now() -
+          Number(last);
 
-        localStorage.removeItem('userId');
+        if (
+          inactiveTime >
+          60 * 60 * 1000
+        ) {
 
-        localStorage.removeItem('artistName');
+          localStorage.clear();
 
-        localStorage.removeItem('role');
+          window.location.href =
+            '/login';
 
-        localStorage.removeItem('verifyEmail');
+        }
 
-        localStorage.removeItem('lastActivity');
+      }, 5000);
 
-        window.location.href = '/login'; // ✅ correct
+    return () =>
+      clearInterval(interval);
+
+  }, []);
+
+  // =========================
+  // PROTECT USER
+  // =========================
+
+  const protect =
+    (component) => {
+
+      return isAuth
+        ? component
+        : (
+          <Navigate
+            to="/login"
+            replace
+          />
+        );
+
+    };
+
+  // =========================
+  // PROTECT ADMIN
+  // =========================
+
+  const protectAdmin =
+    (component) => {
+
+      const role =
+        (
+          localStorage.getItem(
+            'role'
+          ) || ''
+        ).toLowerCase();
+
+      if (!isAuth) {
+
+        return (
+          <Navigate
+            to="/login"
+            replace
+          />
+        );
+
       }
-    }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+      if (role !== 'admin') {
 
-  // ✅ protect
-  const protect = (component) => {
-    return isAuth ? component : <Navigate to="/login" replace />;
-  };
+        return (
+          <Navigate
+            to="/dashboard"
+            replace
+          />
+        );
 
-  const protectAdmin = (component) => {
+      }
 
-  const role =
-    localStorage.getItem('role');
+      return component;
 
-  if (!isAuth) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
-  }
-
-  if (role !== 'admin') {
-    return (
-      <Navigate
-        to="/dashboard"
-        replace
-      />
-    );
-  }
-
-  return component;
-};
+    };
 
   return (
+
     <BrowserRouter>
+
       <Routes>
 
         {/* PUBLIC */}
+
         <Route
           path="/"
           element={
             isAuth
-              ? <Navigate to="/dashboard" replace />
-              : <Landing />
+              ? (
+                <Navigate
+                  to="/dashboard"
+                  replace
+                />
+              )
+              : (
+                <Landing />
+              )
           }
         />
 
-<Route
-  path="/content-rules"
-  element={<ContentRules />}
-/>
-
-<Route
-  path="/verify-artist"
-  element={<VerifyArtist />}
-/>
-
-<Route
-  path="/admin/artist-verifications"
-  element={
-    <AdminArtistVerifications />
-  }
-/>
-
-<Route
-  path="/admin/copyright-status"
-  element={<AdminCopyrightStatus />}
-/>
-
-        <Route path="/dmca" element={<DMCA />} />
-        <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route
-  path="/community-guidelines"
-  element={<CommunityGuidelines />}
-/>
-<Route
-  path="/cookie-policy"
-  element={<CookiePolicy />}
-/>
-<Route
-  path="/copyright-claim"
-  element={<CopyrightClaim />}
-/>
-        
-        <Route path="/verify" element={<Verify />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/success" element={<Success />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/stripe-success" element={<StripeSuccess />} />
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/signup"
+          element={<Signup />}
+        />
+
+        <Route
+          path="/verify"
+          element={<Verify />}
+        />
+
+        <Route
+          path="/success"
+          element={<Success />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/about"
+          element={<About />}
+        />
+
+        <Route
+          path="/help"
+          element={<Help />}
+        />
+
+        <Route
+          path="/pricing"
+          element={<Pricing />}
+        />
+
+        <Route
+          path="/terms"
+          element={<Terms />}
+        />
+
+        <Route
+          path="/privacy"
+          element={<Privacy />}
+        />
+
+        <Route
+          path="/dmca"
+          element={<DMCA />}
+        />
+
+        <Route
+          path="/refund-policy"
+          element={<RefundPolicy />}
+        />
+
+        <Route
+          path="/community-guidelines"
+          element={<CommunityGuidelines />}
+        />
+
+        <Route
+          path="/cookie-policy"
+          element={<CookiePolicy />}
+        />
+
+        <Route
+          path="/copyright-claim"
+          element={<CopyrightClaim />}
+        />
+
+        <Route
+          path="/content-rules"
+          element={<ContentRules />}
+        />
+
+        <Route
+          path="/verify-artist"
+          element={<VerifyArtist />}
+        />
+
+        <Route
+          path="/stripe-success"
+          element={<StripeSuccess />}
+        />
 
         {/* PAYMENT */}
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/payment-cancel" element={<PaymentCancel />} />
-
-        {/* PUBLIC */}
-        <Route path="/release/:slug" element={<PublicRelease />} />
-        <Route path="/smart/:slug" element={<SmartLink />} />
-
-        {/* PROTECTED */}
-        <Route path="/dashboard" element={protect(<Layout><Dashboard /></Layout>)} />
-        <Route path="/upload" element={protect(<Layout><CreateRelease /></Layout>)} />
-        <Route path="/create-release" element={protect(<Layout><CreateRelease /></Layout>)} />
-        <Route path="/music" element={protect(<Layout><MusicPlayer /></Layout>)} />
-        <Route path="/my-music" element={protect(<Layout><MyMusic /></Layout>)} />
-        <Route path="/my-releases" element={protect(<Layout><MyReleases /></Layout>)} />
-        <Route path="/analytics" element={protect(<Layout><Analytics /></Layout>)} />
-        <Route path="/royalties" element={protect(<Layout><Royalties /></Layout>)} />
-        <Route path="/withdraw" element={protect(<Layout><Withdraw /></Layout>)} />
-        <Route path="/withdraw/paypal" element={protect(<Layout><PaypalWithdraw /></Layout>)} />
-        <Route path="/connect-stripe" element={protect(<Layout><ConnectStripe /></Layout>)} />
-        <Route path="/profile" element={protect(<Layout><Profile /></Layout>)} />
-        <Route path="/collaborators" element={protect(<Layout><Collaborators /></Layout>)} />
-        <Route path="/report" element={protect(<Layout><Report /></Layout>)} />
-        <Route path="/tax" element={protect(<Layout><TaxForm /></Layout>)} />
-        <Route path="/onboarding" element={protect(<Layout><PayoutOnboarding /></Layout>)} />
-        <Route path="/edit/:id" element={protect(<Layout><EditRelease /></Layout>)} />
-
-        {/* SETTINGS */}
-       <Route
-  path="/settings"
-  element={protect(<Layout><SettingsLayout /></Layout>)}
->
-  <Route path="subscription" element={<Subscription />} />
-  <Route path="contact" element={<Contact />} />
-  <Route path="card" element={<Card />} />
-  <Route path="contract" element={<Contract />} />
-  <Route path="card-form" element={<CardForm />} />
-  <Route path="music" element={<ManageMusic />} />
-  <Route path="delete-account" element={<DeleteAccount />} />
-</Route>
-
-        {/* ADMIN */}
-        <Route path="/admin" element={protect(<AdminLayout><AdminDashboard /></AdminLayout>)} />
-        <Route path="/admin/users" element={protect(<AdminLayout><AdminUsers /></AdminLayout>)} />
-        <Route path="/admin/email" element={protect(<AdminLayout><AdminEmail /></AdminLayout>)} />
-        <Route path="/admin/approvals" element={protect(<AdminLayout><AdminApprovals /></AdminLayout>)} />
-        <Route path="/admin/revenue" element={protect(<AdminLayout><AdminRevenue /></AdminLayout>)} />
-        <Route path="/admin/subscriptions" element={protect(<AdminLayout><AdminSubscriptions /></AdminLayout>)} />
-        <Route path="/admin/referrals" element={protect(<AdminLayout><AdminReferrals /></AdminLayout>)} />
-        <Route path="/admin/activity" element={protect(<AdminLayout><AdminActivity /></AdminLayout>)} />
-        <Route path="/admin/analytics" element={protect(<AdminLayout><AdminAnalytics /></AdminLayout>)} />
-        <Route path="/admin/posts" element={protect(<AdminLayout><AdminPosts /></AdminLayout>)} />
-        <Route path="/admin/approvals/songs" element={protect(<AdminLayout><AdminSongs /></AdminLayout>)} />
-        <Route path="/admin/approvals/videos" element={protect(<AdminLayout><AdminVideos /></AdminLayout>)} />
-        <Route path="/admin/payouts" element={protect(<AdminLayout><AdminPayoutHistory /></AdminLayout>)} />
-        <Route path="/admin/finance" element={protect(<AdminLayout><AdminFinanceDashboard /></AdminLayout>)} />
-        <Route path="/admin/withdraw" element={protect(<AdminLayout><AdminWithdraw /></AdminLayout>)} />
-        <Route path="/admin/tax" element={protect(<AdminLayout><AdminTax /></AdminLayout>)} />
-        <Route path="/admin/approvals/albums" element={protect(<AdminLayout><AdminAlbums /></AdminLayout>)} />
 
         <Route
-  path="/admin/copyright-claims"
-  element={protect(
-    <AdminLayout>
-      <AdminCopyrightClaims />
-    </AdminLayout>
-  )}
-/>
+          path="/payment"
+          element={<Payment />}
+        />
 
-<Route
-  path="/admin/copyright-reviewing"
-  element={
-    <AdminLayout>
-      <AdminCopyrightReviewing />
-    </AdminLayout>
-  }
-/>
+        <Route
+          path="/payment-success"
+          element={<PaymentSuccess />}
+        />
 
-<Route
-  path="/admin/copyright-approved"
-  element={
-    <AdminLayout>
-      <AdminCopyrightApproved />
-    </AdminLayout>
-  }
-/>
+        <Route
+          path="/payment-cancel"
+          element={<PaymentCancel />}
+        />
 
-<Route
-  path="/admin/copyright-rejected"
-  element={
-    <AdminLayout>
-      <AdminCopyrightRejected />
-    </AdminLayout>
-  }
-/>
+        {/* PUBLIC MUSIC */}
 
-        <Route path="*" element={<div style={{color:'#fff', padding:20}}>Page not found</div>} />
+        <Route
+          path="/release/:slug"
+          element={<PublicRelease />}
+        />
+
+        <Route
+          path="/smart/:slug"
+          element={<SmartLink />}
+        />
+
+        {/* USER ROUTES */}
+
+        <Route
+          path="/dashboard"
+          element={
+            protect(
+              <Layout>
+                <Dashboard />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/upload"
+          element={
+            protect(
+              <Layout>
+                <CreateRelease />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/create-release"
+          element={
+            protect(
+              <Layout>
+                <CreateRelease />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/music"
+          element={
+            protect(
+              <Layout>
+                <MusicPlayer />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/my-music"
+          element={
+            protect(
+              <Layout>
+                <MyMusic />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/my-releases"
+          element={
+            protect(
+              <Layout>
+                <MyReleases />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/analytics"
+          element={
+            protect(
+              <Layout>
+                <Analytics />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/royalties"
+          element={
+            protect(
+              <Layout>
+                <Royalties />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/withdraw"
+          element={
+            protect(
+              <Layout>
+                <Withdraw />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/withdraw/paypal"
+          element={
+            protect(
+              <Layout>
+                <PaypalWithdraw />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/connect-stripe"
+          element={
+            protect(
+              <Layout>
+                <ConnectStripe />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            protect(
+              <Layout>
+                <Profile />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/collaborators"
+          element={
+            protect(
+              <Layout>
+                <Collaborators />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/report"
+          element={
+            protect(
+              <Layout>
+                <Report />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/tax"
+          element={
+            protect(
+              <Layout>
+                <TaxForm />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/onboarding"
+          element={
+            protect(
+              <Layout>
+                <PayoutOnboarding />
+              </Layout>
+            )
+          }
+        />
+
+        <Route
+          path="/edit/:id"
+          element={
+            protect(
+              <Layout>
+                <EditRelease />
+              </Layout>
+            )
+          }
+        />
+
+        {/* SETTINGS */}
+
+        <Route
+          path="/settings"
+          element={
+            protect(
+              <Layout>
+                <SettingsLayout />
+              </Layout>
+            )
+          }
+        >
+
+          <Route
+            path="subscription"
+            element={<Subscription />}
+          />
+
+          <Route
+            path="contact"
+            element={<Contact />}
+          />
+
+          <Route
+            path="card"
+            element={<Card />}
+          />
+
+          <Route
+            path="contract"
+            element={<Contract />}
+          />
+
+          <Route
+            path="card-form"
+            element={<CardForm />}
+          />
+
+          <Route
+            path="music"
+            element={<ManageMusic />}
+          />
+
+          <Route
+            path="delete-account"
+            element={<DeleteAccount />}
+          />
+
+        </Route>
+
+        {/* ADMIN */}
+
+        <Route
+          path="/admin"
+          element={
+            protectAdmin(
+              <AdminLayout />
+            )
+          }
+        >
+
+          <Route
+            index
+            element={<AdminDashboard />}
+          />
+
+          <Route
+            path="users"
+            element={<AdminUsers />}
+          />
+
+          <Route
+            path="email"
+            element={<AdminEmail />}
+          />
+
+          <Route
+            path="approvals"
+            element={<AdminApprovals />}
+          />
+
+          <Route
+            path="revenue"
+            element={<AdminRevenue />}
+          />
+
+          <Route
+            path="subscriptions"
+            element={<AdminSubscriptions />}
+          />
+
+          <Route
+            path="referrals"
+            element={<AdminReferrals />}
+          />
+
+          <Route
+            path="activity"
+            element={<AdminActivity />}
+          />
+
+          <Route
+            path="analytics"
+            element={<AdminAnalytics />}
+          />
+
+          <Route
+            path="posts"
+            element={<AdminPosts />}
+          />
+
+          <Route
+            path="withdraw"
+            element={<AdminWithdraw />}
+          />
+
+          <Route
+            path="payouts"
+            element={<AdminPayoutHistory />}
+          />
+
+          <Route
+            path="finance"
+            element={<AdminFinanceDashboard />}
+          />
+
+          <Route
+            path="tax"
+            element={<AdminTax />}
+          />
+
+          <Route
+            path="approvals/songs"
+            element={<AdminSongs />}
+          />
+
+          <Route
+            path="approvals/videos"
+            element={<AdminVideos />}
+          />
+
+          <Route
+            path="approvals/albums"
+            element={<AdminAlbums />}
+          />
+
+          <Route
+            path="copyright-claims"
+            element={<AdminCopyrightClaims />}
+          />
+
+          <Route
+            path="copyright-reviewing"
+            element={<AdminCopyrightReviewing />}
+          />
+
+          <Route
+            path="copyright-approved"
+            element={<AdminCopyrightApproved />}
+          />
+
+          <Route
+            path="copyright-rejected"
+            element={<AdminCopyrightRejected />}
+          />
+
+          <Route
+            path="copyright-status"
+            element={<AdminCopyrightStatus />}
+          />
+
+          <Route
+            path="artist-verifications"
+            element={<AdminArtistVerifications />}
+          />
+
+        </Route>
+
+        {/* 404 */}
+
+        <Route
+          path="*"
+          element={
+            <div
+              style={{
+                color:'#fff',
+                padding:20
+              }}
+            >
+              Page not found
+            </div>
+          }
+        />
 
       </Routes>
+
     </BrowserRouter>
+
   );
 }
 

@@ -55,7 +55,7 @@ if (!limits?.analytics) {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>👽 Kasuku Analytics</h1>
+      <h1 style={styles.title}> Kasuku Analytics</h1>
 
       {/* ========================= */}
       {/* STATS */}

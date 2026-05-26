@@ -68,18 +68,10 @@ export default function Login() {
   res.data?.user || {};
 
 const token =
-  res.data?.token;
+  res.data?.access_token;
 
 // ✅ OTP LOGIN FLOW
 // backend may return ONLY success message
-
-if (token) {
-
-  localStorage.setItem(
-    'token',
-    token,
-  );
-}
 
       // =========================
       // SAVE TOKEN
@@ -102,11 +94,12 @@ if (token) {
       // =========================
       // SAVE USER DATA
       // =========================
-
       localStorage.setItem(
-        'role',
-        user?.role || 'user',
-      );
+  'role',
+  (
+    user?.role || 'user'
+  ).toLowerCase()
+);
 
       localStorage.setItem(
         'userId',
@@ -188,7 +181,7 @@ if (token) {
       // VERIFY PAGE
       // =========================
 
-      navigate('/verify');
+    navigate('/verify');
 
     } catch (err: any) {
 
@@ -197,11 +190,25 @@ if (token) {
         err,
       );
 
-      alert(
-        err?.response?.data?.message ||
-        t?.en?.loginFailed ||
-        'Login failed ❌'
-      );
+     const message =
+  err?.response?.data?.message || '';
+
+if (
+  message
+    .toLowerCase()
+    .includes('wait before requesting another otp')
+) {
+
+  navigate('/verify');
+
+  return;
+}
+
+alert(
+  message ||
+  t?.en?.loginFailed ||
+  'Login failed ❌'
+);
 
     } finally {
 
