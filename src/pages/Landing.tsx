@@ -132,45 +132,48 @@ export default function Landing() {
         const plans =
           res.data || [];
 
+          console.log('🔥 PRICING FROM BACKEND:', plans);
+
         const formatted = {
 
-          soloMonthly:
-            plans.find(
-              (p: any) =>
-                p.plan === 'solo'
-            )?.monthlyPrice || 1.75,
+  soloMonthly:
+    plans.find(
+      (p: any) =>
+        p.name === 'Solo Artist'
+    )?.monthlyPrice || 1.75,
 
-          soloYearly:
-            plans.find(
-              (p: any) =>
-                p.plan === 'solo'
-            )?.yearlyPrice || 20.99,
+  soloYearly:
+    plans.find(
+      (p: any) =>
+        p.name === 'Solo Artist'
+    )?.yearlyPrice || 20.99,
 
-          artistsMonthly:
-            plans.find(
-              (p: any) =>
-                p.plan === 'artists'
-            )?.monthlyPrice || 2.08,
+  artistsMonthly:
+    plans.find(
+      (p: any) =>
+        p.name === 'Artists'
+    )?.monthlyPrice || 2.08,
 
-          artistsYearly:
-            plans.find(
-              (p: any) =>
-                p.plan === 'artists'
-            )?.yearlyPrice || 24.99,
+  artistsYearly:
+    plans.find(
+      (p: any) =>
+        p.name === 'Artists'
+    )?.yearlyPrice || 24.99,
 
-          proMonthly:
-            plans.find(
-              (p: any) =>
-                p.plan === 'pro'
-            )?.monthlyPrice || 5.08,
+  proMonthly:
+    plans.find(
+      (p: any) =>
+        p.name === 'Pro'
+    )?.monthlyPrice || 5.08,
 
-          proYearly:
-            plans.find(
-              (p: any) =>
-                p.plan === 'pro'
-            )?.yearlyPrice || 60.99,
-        };
+  proYearly:
+    plans.find(
+      (p: any) =>
+        p.name === 'Pro'
+    )?.yearlyPrice || 60.99,
+};
 
+console.log('🔥 FORMATTED PRICING:', formatted);
         setPricing(
           formatted
         );

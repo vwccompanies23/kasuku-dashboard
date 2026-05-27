@@ -38,37 +38,51 @@ export default function Pricing() {
         );
 
        const plans = res.data || [];
+       console.log(plans);
 
 const formatted = {
+
   soloMonthly:
     plans.find(
-      (p) => p.plan === 'solo'
-    )?.monthlyPrice || 0,
+      (p: any) =>
+        p.name ===
+        'Solo Artist'
+    )?.monthlyPrice || 1.75,
 
   soloYearly:
     plans.find(
-      (p) => p.plan === 'solo'
-    )?.yearlyPrice || 0,
+      (p: any) =>
+        p.name ===
+        'Solo Artist'
+    )?.yearlyPrice || 20.99,
 
   artistsMonthly:
     plans.find(
-      (p) => p.plan === 'artists'
-    )?.monthlyPrice || 0,
+      (p: any) =>
+        p.name ===
+        'Artists'
+    )?.monthlyPrice || 2.08,
 
   artistsYearly:
     plans.find(
-      (p) => p.plan === 'artists'
-    )?.yearlyPrice || 0,
+      (p: any) =>
+        p.name ===
+        'Artists'
+    )?.yearlyPrice || 24.99,
 
   proMonthly:
     plans.find(
-      (p) => p.plan === 'pro'
-    )?.monthlyPrice || 0,
+      (p: any) =>
+        p.name ===
+        'Pro'
+    )?.monthlyPrice || 5.08,
 
   proYearly:
     plans.find(
-      (p) => p.plan === 'pro'
-    )?.yearlyPrice || 0,
+      (p: any) =>
+        p.name ===
+        'Pro'
+    )?.yearlyPrice || 60.99,
 };
 
 setPricing(formatted);
