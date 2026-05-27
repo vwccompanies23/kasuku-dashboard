@@ -126,7 +126,7 @@ export default function Landing() {
 
         const res =
           await api.get(
-            '/pricing'
+            '/admin/subscriptions'
           );
 
         const plans =

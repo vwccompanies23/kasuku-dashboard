@@ -34,7 +34,7 @@ export default function Pricing() {
     const loadPricing = async () => {
       try {
         const res = await api.get(
-          '/pricing',
+          '/admin/subscriptions',
         );
 
        const plans = res.data || [];
