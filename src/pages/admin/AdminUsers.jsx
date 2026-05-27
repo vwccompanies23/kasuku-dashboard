@@ -4,8 +4,17 @@ import { api } from '../../api';
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
 
+  const [stats, setStats] = useState({
+  totalUsers: 0,
+  paidUsers: 0,
+  freeUsers: 0,
+  managedUsers: 0,
+  admins: 0,
+});
+
   useEffect(() => {
     loadUsers();
+    loadStatus();
   }, []);
 
   const loadUsers = async () => {
@@ -16,6 +25,22 @@ export default function AdminUsers() {
       console.log(err);
     }
   };
+  const loadStats = async () => {
+  try {
+
+    const res =
+      await api.get(
+        '/users/stats',
+      );
+
+    setStats(res.data);
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+};
 
   // =========================
   // 🎁 GIVE FREE ACCESS
@@ -117,6 +142,35 @@ export default function AdminUsers() {
       <h2 style={styles.title}>
         👥 All Users
       </h2>
+
+      <div style={styles.statsGrid}>
+
+  <div style={styles.statCard}>
+    <h3>{stats.totalUsers}</h3>
+    <p>Total Users</p>
+  </div>
+
+  <div style={styles.statCard}>
+    <h3>{stats.paidUsers}</h3>
+    <p>Paid Users</p>
+  </div>
+
+  <div style={styles.statCard}>
+    <h3>{stats.freeUsers}</h3>
+    <p>Free Users</p>
+  </div>
+
+  <div style={styles.statCard}>
+    <h3>{stats.managedUsers}</h3>
+    <p>Managed Artists</p>
+  </div>
+
+  <div style={styles.statCard}>
+    <h3>{stats.admins}</h3>
+    <p>Admins</p>
+  </div>
+
+</div>
 
       <div style={styles.table}>
         {users.length === 0 ? (
@@ -240,6 +294,22 @@ const styles = {
     flexDirection: 'column',
     gap: 15,
   },
+
+  statsGrid: {
+  display: 'grid',
+  gridTemplateColumns:
+    'repeat(auto-fit,minmax(180px,1fr))',
+  gap: 20,
+  marginBottom: 30,
+},
+
+statCard: {
+  background: '#111827',
+  border: '1px solid #1f2937',
+  borderRadius: 18,
+  padding: 24,
+  textAlign: 'center',
+},
 
   row: {
     display: 'flex',
