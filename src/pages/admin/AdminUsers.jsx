@@ -19,7 +19,33 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     try {
       const res = await api.get('/admin/users');
-      setUsers(res.data);
+      const allUsers = res.data || [];
+
+setUsers(allUsers);
+
+setStats({
+  totalUsers: allUsers.length,
+
+  paidUsers: allUsers.filter(
+    (u) =>
+      u.plan &&
+      u.plan !== 'FREE'
+  ).length,
+
+  freeUsers: allUsers.filter(
+    (u) =>
+      !u.plan ||
+      u.plan === 'FREE'
+  ).length,
+
+  managedUsers: allUsers.filter(
+    (u) => u.isManaged
+  ).length,
+
+  admins: allUsers.filter(
+    (u) => u.role === 'admin'
+  ).length,
+});
     } catch (err) {
       console.log(err);
     }
