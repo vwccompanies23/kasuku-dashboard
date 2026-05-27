@@ -14,7 +14,6 @@ export default function AdminUsers() {
 
   useEffect(() => {
     loadUsers();
-    loadStatus();
   }, []);
 
   const loadUsers = async () => {
